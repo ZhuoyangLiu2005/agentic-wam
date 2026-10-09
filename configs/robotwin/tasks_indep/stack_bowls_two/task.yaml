@@ -1,0 +1,17 @@
+short: stack_bowls_two
+gen_tokens: 128
+nis: 53
+source:
+  frozen_program: codegen/sim/programs_indep/stack_bowls_two/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: 339969c0e83e23560855a2c0b937e45a98411fdc67167a68e77ea18f0f78cb6e
+tokens:
+  preamble: 224
+  slices:
+  - 74
+  - 120
+  max_slice: 120

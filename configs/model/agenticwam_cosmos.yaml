@@ -1,0 +1,66 @@
+# AGENTICWAM-Cosmos: tri-modal MoT with the Cosmos-Predict2.5-2B DiT + Wan2.2 VAE video expert.
+# Built + weights loaded by create_agenticwam_cosmos (build.py). Video expert loads the
+# checkpoint-200000 key-for-key (transformer + video_tokenizer + vae); action/code train from scratch.
+_target_: agenticwam.models.cosmos_mot.build.create_agenticwam_cosmos
+
+# Weights: every task starts from an AgenticWAM checkpoint (foundation_ckpt); the frozen VAE comes from the public
+# Wan2.2 VAE. Only pretraining from scratch loads a Cosmos video checkpoint (configs/real_pre_train/task/).
+checkpoint_dir: null
+load_pretrain: false
+wan_vae_path: ${paths.wan_vae}
+
+# 64-D unified delta-EEF action/proprio (real robots; RoboTwin task configs set 14-D joint).
+action_dim: 64
+proprio_dim: 64
+n_cameras: 3
+
+# Tri-modal: video + code + action experts. false = the 2-expert (video + action) baseline.
+use_code_expert: true
+code_model_name: ${paths.code_model}   # dllm code body (SDAR-1.7B, block-diffusion)
+code_objective: joint          # DEFAULT: joint (LLaDA co-denoise) | ar | blockdiff
+code_block_length: 4
+max_code_tokens: 512            # cap on (instruction prompt + code) tokens for training
+# infer_code_tokens (the inference code canvas, code tokens only) is set per dataset / task config: an
+# oversized canvas is out of distribution and makes the model pad the program with filler.
+mot_checkpoint_mixed_attn: true
+# AgenticWAM attention: the code expert plans from a Qwen3-VL view of the observation and the instruction;
+# the noisy future video reads the code; the action reads everything.
+code_vision: qwen3vl_prefix      # frozen Qwen3-VL-2B tower + trainable merger
+code_vision_path: ${paths.code_vision}
+
+# Text: training uses cached Cosmos-Reason1 prompt_embs (sample['prompt_embs'], precomputed
+# offline via scripts/precompute_cosmos_text_embeds.py) → the 8.3B encoder stays out of training.
+include_text_encoder: false
+
+# Video flow-matching noise: the Beta(alpha=7,beta=1,noise_s=0.999) + sigma_shift=5.0.
+# (set video_noise_beta: null for uniform.)
+video_noise_beta: [7.0, 1.0, 0.999]
+sigma_shift: 5.0
+
+# Video prediction: condition on the first obs frame/view (clean, sigma=cond_timestep), generate
+# the future frames. num_cond_frames=0 -> pure unconditional generation (the default fallback).
+num_cond_frames: 1
+
+loss_lambda_video: 1.0
+loss_lambda_action: 1.0
+loss_lambda_code: 0.5
+
+# Objective-specific sigma weighting (EXPERIMENT, default OFF -> training byte-identical).
+# The video sigma is shared by the video objective AND by what code/action read via mixed
+# attention; Beta(7,1)+shift=5 puts ~95% of samples at sigma>0.9, so the policy rarely sees
+# an informative future. Sample from a mixture and importance-weight each objective back to
+# its own target: w_v=P_cur/q for L_video, w_cond=P_inf/q for L_action+L_code. One forward,
+# one token set, inference unchanged.
+sigma_reweight: true
+sigma_reweight_alpha: 0.5          # mixture weight on the current (video-generation) density
+sigma_reweight_clip: 4.0
+sigma_reweight_normalize: true
+sigma_reweight_stratified: true
+
+use_gradient_checkpointing: true
+
+# E3 learned code memory (plan across replans); disabled by default
+code_memory: false
+code_memory_slots: 32
+code_memory_heads: 8
+code_memory_selfgen_p: 0.5

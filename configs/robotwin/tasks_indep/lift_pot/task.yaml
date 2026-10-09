@@ -1,0 +1,16 @@
+short: lift_pot
+gen_tokens: 96
+nis: 40
+source:
+  frozen_program: codegen/sim/programs_indep/lift_pot/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: 8a5ec59cd565bc3ae03bc38ec96ce53bdf19c21a0fb8696ed9ab2b86a60cdd8b
+tokens:
+  preamble: 65
+  slices:
+  - 85
+  max_slice: 85

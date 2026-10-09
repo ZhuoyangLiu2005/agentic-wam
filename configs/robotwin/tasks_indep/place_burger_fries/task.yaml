@@ -1,0 +1,16 @@
+short: place_burger_fries
+gen_tokens: 104
+nis: 43
+source:
+  frozen_program: codegen/sim/programs_indep/place_burger_fries/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: dd7af8a2fc3e87442713280534eff81b7ec143dc28f5c0fcc275478d99a8a64f
+tokens:
+  preamble: 72
+  slices:
+  - 93
+  max_slice: 93

@@ -1,0 +1,29 @@
+# Labeling config for the YAM robot (arms + parallel grippers) pretraining source — every key a run reads,
+# one line per key (full catalog: codegen/config.py). Launch with:
+#   CODEGEN_CONFIG=configs/yam.yaml $PY scripts/run_batch.py --tasks-file <units.txt>
+# Precedence per key: CLI flag > env var > this file > built-in default.
+
+# --- this run ----------------------------------------------------------------
+embodiment: yam
+tag: v1                                             # campaign version tag — bump per campaign
+vanilla: false                                      # true = annotation-only prompt and uniform frame sampling
+
+# --- dataset (docs/PRETRAINING.md §1) ------------------------------------------
+yam_root: /path/to/yam_dataset                         # holds train_shard_*/ LeRobot datasets
+yam_camera: observation.images.cam_high             # the video stream the actor sees
+selection:                                          # optional <dataset>[:<episode>] units file; empty = all episodes
+noise_labels:                                       # optional comma-separated annotator-noise sub-task labels
+
+# --- actor -------------------------------------------------------------------
+vlm_url: https://<provider>/v1/chat/completions    # any OpenAI-compatible endpoint; key in VLM_API_KEY or .vlm_api_key
+coder_model: gcp/google/gemini-3.1-pro-preview      # actor VLM (model id at that endpoint)
+yam_frame_gap: 40                                    # max frames between consecutive sampled frames
+repair_retries: 2                                   # repair rounds per slice on static-validation failure
+max_slices: 0                                       # cap coded slices per episode (0 = all; debug knob)
+vlm_max_tokens: 4096                                # per-call output cap
+vlm_temperature: 0.1                                # actor sampling temperature
+
+# --- batch / coordinator -----------------------------------------------------
+parallel: 8                                         # concurrent actors per batch
+tasks_per_round: 8                                  # tasks per coordinator round
+actor_timeout: 7200                                 # per-episode actor subprocess timeout (s)

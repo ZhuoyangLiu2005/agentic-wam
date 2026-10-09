@@ -1,0 +1,20 @@
+short: put_bottles_dustbin
+gen_tokens: 72
+nis: 30
+source:
+  frozen_program: codegen/sim/programs/put_bottles_dustbin/v3/frozen_program.py
+  version: v3
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: 41b5a342665c71b593c20d1dfa9b2e8db2c73b712dfd9ee057767cbb54f360ad
+tokens:
+  preamble: 59
+  slices:
+  - 58
+  - 41
+  max_slice: 58
+stage2:
+  clean: 3/5
+  randomized: 2/3

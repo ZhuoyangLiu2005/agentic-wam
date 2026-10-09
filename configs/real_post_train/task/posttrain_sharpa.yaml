@@ -1,0 +1,24 @@
+# @package _global_
+# Post-training (SFT) of the pretrained model on one Tianji + Sharpa (arms + 22-DoF tactile hands) dataset, unified 64-D, from the
+# pretraining foundation (pretrain_magic_soup). One recipe for every task; the dataset comes from the data config
+# (configs/real_post_train/data/sharpa.yaml):
+#   bash scripts/train_real_sharpa.sh <dataset_dir> <code_cache.pt> [overrides]
+defaults:
+  - override /data: sharpa
+  - override /model: agenticwam_cosmos
+  - _self_
+
+batch_size: 4
+num_workers: 8
+lr_scheduler_type: cosine
+learning_rate: 1e-4
+weight_decay: 1e-2
+max_grad_norm: 1.0
+num_epochs: 1                     # unused: max_steps sets the length
+max_steps: 100000
+save_every: 20000
+log_every: 20
+eval_every: 2000
+gradient_accumulation_steps: 1
+resume: null
+foundation_ckpt: ${paths.pretrain_ckpt}

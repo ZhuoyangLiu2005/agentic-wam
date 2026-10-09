@@ -1,0 +1,23 @@
+# Shared SAM3 / Contact-GraspNet service environment (Python 3.12).
+# Install CUDA Torch separately, as documented in SETUP.md.
+numpy==1.26.4
+setuptools<81
+wheel
+scipy<1.14
+opencv-python-headless==4.10.0.84
+trimesh
+pyrender
+open3d
+h5py
+fastapi
+uvicorn
+tyro
+viser
+PyYAML
+pillow
+tqdm
+pycocotools
+decord
+einops
+scikit-image
+psutil

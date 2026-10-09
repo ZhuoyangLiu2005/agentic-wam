@@ -1,0 +1,22 @@
+short: place_can_basket
+gen_tokens: 136
+nis: 57
+source:
+  frozen_program: codegen/sim/programs/place_can_basket/v3/frozen_program.py
+  version: v3
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 4
+  executed_sha256: 049f4c957b9892eb0fc50ecba42be9ffe4ea59403a248519213291dc65883508
+tokens:
+  preamble: 205
+  slices:
+  - 97
+  - 122
+  - 100
+  - 125
+  max_slice: 125
+stage2:
+  clean: 3/5
+  randomized: 2/3

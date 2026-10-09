@@ -1,0 +1,21 @@
+short: dump_bin_bigbin
+gen_tokens: 120
+nis: 50
+source:
+  frozen_program: codegen/sim/programs/dump_bin_bigbin/v3/frozen_program.py
+  version: v3
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 3
+  executed_sha256: cb69daa59457a4fdde35b452228cf56571413c8639b9e412841a6defa6664ad7
+tokens:
+  preamble: 104
+  slices:
+  - 101
+  - 58
+  - 109
+  max_slice: 109
+stage2:
+  clean: 4/5
+  randomized: 2/3

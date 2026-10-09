@@ -1,0 +1,21 @@
+short: scan_object
+gen_tokens: 136
+nis: 57
+source:
+  frozen_program: codegen/sim/programs/scan_object/v2/frozen_program.py
+  version: v2
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 3
+  executed_sha256: c1a61928d443787e31947cf8b96ef1e86e45ae3de9d83a38dbc9596af2238bd0
+tokens:
+  preamble: 116
+  slices:
+  - 88
+  - 121
+  - 96
+  max_slice: 121
+stage2:
+  clean: 4/5
+  randomized: 2/3

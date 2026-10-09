@@ -1,0 +1,16 @@
+short: move_playingcard_away
+gen_tokens: 88
+nis: 37
+source:
+  frozen_program: codegen/sim/programs_indep/move_playingcard_away/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: 1b412c2e1715a7533da7fdd15b48f7eb642a1cae2ac96d1bef7d7f025a2d5d09
+tokens:
+  preamble: 56
+  slices:
+  - 75
+  max_slice: 75

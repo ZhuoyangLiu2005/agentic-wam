@@ -1,0 +1,11 @@
+[project]
+name = "capsim"
+version = "0.1.0"
+description = "RoboTwin code-as-policy engine (extracted from ASPIRE aspire.sim.cap), frozen-program pipeline"
+requires-python = ">=3.10, <3.13"
+
+[tool.setuptools.packages.find]
+include = ["capsim*"]
+
+[tool.setuptools.package-data]
+capsim = ["profiles/*.yaml", "integrations/robotwin/*.yaml", "data/*.json"]

@@ -1,0 +1,69 @@
+# Machine-specific settings for RoboTwin evaluation (robotwin/eval/benchmark.py, robotwin/hybrid_eval/) and data prep
+# (robotwin/dataprep/prepare.py). Copy to site.yaml (git-ignored) and edit.
+# `${repo}` is the repository root (filled in by the loader); `${key}` references another key here.
+python_bin:      /path/to/conda/envs/agenticwam/bin            # env with agenticwam + RoboTwin deps; prepended to PATH
+agenticwam_root:    /path/to/AgenticWAM
+robotwin_root:   ${aspire_root}/capsim/third_party/RoboTwin    # codegen/sim's RoboTwin checkout; env CAPX_ROBOTWIN_ROOT overrides
+aspire_root:     ${agenticwam_root}/codegen/sim               # capsim (RoboTwin API + vision servers); env AGENTICWAM_ASPIRE_ROOT overrides
+sim_dir:         ${aspire_root}                              # CWD + PYTHONPATH root of the vision servers
+serving_subdir:  capsim/serving                              # launch_sam3_server.py, launch_contact_graspnet_server.py
+seg_venv:        /path/to/conda/envs/codegen-perception      # codegen/sim SETUP.md section 5; runs SAM3 + GraspNet
+checkpoints_root: ${repo}/checkpoints                        # SDAR code model, HF cache for the policy tower
+hf_cache_policy: ${checkpoints_root}/hf_cache                # Qwen3-VL tower + Cosmos-Reason1 (used offline)
+hf_cache_vision: /path/to/hf_cache                           # Molmo / SAM3 / GraspNet weights
+molmo_venv:      /path/to/venvs/molmo_vllm
+hf_token_file:   ${repo}/hf_api_key.txt                      # SAM3 server token (never commit)
+vulkan_icd:      /etc/vulkan/icd.d/nvidia_icd.json
+ld_library_paths:                                            # FFmpeg 7 libs for torchcodec (see docs)
+  - ${repo}/third_party/ffmpeg7-lib
+# 14-D joint normalisation stats; passed as EVALUATION.dataset_stats_path (needed when
+# --ckpt points outside a run dir, e.g. a checkpoint snapshot).
+dataset_stats:   /path/to/robotwin2.0/dataset_stats.json
+code_model:      ${checkpoints_root}/SDAR-1.7B-Chat                 # SDAR-1.7B code body (HF JetLM/SDAR-1.7B-Chat)
+robotwin_official_labels: /path/to/robotwin2.0_labels              # = paths.robotwin_official_labels
+robotwin_wam_run:    /path/to/runs/robotwin_wam/<RUN_ID>            # run dir (or released checkpoint dir) of each preset
+robotwin_hybrid_run: /path/to/runs/robotwin_hybrid/<RUN_ID>
+robotwin_cap_slices: /path/to/robotwin_cap_slices                   # = paths.robotwin_cap_slices (nn-repair slice corpus)
+diffsynth_model_base: ${agenticwam_root}/checkpoints
+ffmpeg:          ffmpeg                                      # rollout-viewer remux: a name on PATH or an absolute path
+viewer_out:      ${repo}/runs/rollout_viewer                 # default rollout_viewer.py output dir
+trace_dir:       ${repo}/runs/hybrid_traces                  # AGENTICWAM_TRACE files
+watch_log:       ${repo}/runs/hybrid_eval_watch.log          # one line per finished arm
+vision:                                                      # perception servers, all on 127.0.0.1
+  molmo:    {port: 8122, model: allenai/Molmo2-8B, gpu_util: 0.28, log: /tmp/molmo_hyb.log}
+  sam3:     {port: 8114, log: /tmp/sam3_hyb.log}
+  graspnet: {port: 8115, log: /tmp/graspnet_hyb.log}
+  ready_timeout_s: 900
+dataprep:                                                 # training-data prep (robotwin/dataprep/prepare.py)
+  norm_stats:       /path/to/robotwin2.0/dataset_stats.json  # 14-D joint normalisation stats of the RoboTwin 2.0 LeRobot set
+  text_cache_root:  /path/to/local_disk/cosmos_text_cache    # Cosmos-Reason1 prompt embeddings, ~25 MB per instruction
+  text_encoder:     ${checkpoints_root}/Cosmos-Reason1-7B
+  code_model:       ${code_model}
+  foundation_ckpt:  ${checkpoints_root}/<pretrain run>/checkpoints/weights/step_XXXXXX.pt
+  code_vision_path: ${checkpoints_root}/Qwen3-VL-2B-Instruct
+
+# ---------------------------------------------------------------------------------------------
+# Environment switches (NOT keys of this file -- export them around the eval command).
+# launch.py sets the plumbing ones itself (AGENTICWAM_HYBRID, AGENTICWAM_HYBRID_TASKS, AGENTICWAM_FROZEN_PROGRAM,
+# AGENTICWAM_CODE_PREAMBLE_FILE, AGENTICWAM_TRACE, ...); the ones below are what a run actually tunes.
+#
+#   AGENTICWAM_NN_REPAIR          0    1 = when the gate rejects a generated slice, serve the nearest GT
+#                               slice instead. The code channel is then NOT pure generation, so its
+#                               share is not comparable with a run that leaves this off.
+#   AGENTICWAM_NN_REPAIR_CORPUS   auto  root of the slice corpus to match against. launch.py derives it
+#                               from the preset's `eval_task` (task config -> data config ->
+#                               code_slices_cache_dir), so it normally needs no setting; export it
+#                               only to match against a different corpus on purpose.
+#   AGENTICWAM_NN_REPAIR_SIM      0.80 minimum similarity of the best match.
+#   AGENTICWAM_NN_REPAIR_MARGIN   0.05 minimum gap between the best and second-best match (ambiguity).
+#   AGENTICWAM_CODE_RETRY_CAP     3    re-executions allowed after code raises -- both for a step's slice
+#                               and for the episode-start prelude.
+#   AGENTICWAM_EVAL_PREPROC       parity  legacy | parity | parity_crop. `parity` applies the training
+#                               pipeline's stage-1 full-frame transform, which eval used to skip.
+#   AGENTICWAM_EVAL_PREPROC_CROP  0.95 centre-crop fraction, parity_crop only.
+#   AGENTICWAM_EOS_RUN_TRUNC      0    1 = strip the trailing EOS run and drop isolated interior EOS,
+#                               instead of truncating at the FIRST EOS (which turns a stray early
+#                               EOS into a comment-only slice).
+#   AGENTICWAM_FRAME_EVERY        12   sim steps per recorded video frame.
+#   AGENTICWAM_SAVE_ALL_REPLANS   0    1 = keep a video for every replan, not just the first.
+#   AGENTICWAM_DEPLOY_DTYPE       fp32 policy dtype at inference.

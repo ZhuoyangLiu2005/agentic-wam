@@ -1,0 +1,12 @@
+numpy==1.26.4
+datasets==3.6.0
+huggingface-hub>=0.34,<1
+pyarrow
+pandas
+jsonlines
+packaging
+pillow
+h5py
+PyYAML
+omegaconf
+tqdm

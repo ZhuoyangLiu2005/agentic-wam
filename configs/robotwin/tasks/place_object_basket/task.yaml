@@ -1,0 +1,24 @@
+short: place_object_basket
+gen_tokens: 96
+nis: 40
+source:
+  frozen_program: codegen/sim/programs/place_object_basket/v4/frozen_program.py
+  version: v4
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 6
+  executed_sha256: e034978b6e2c46cefe7c7f4c61de91fae95ef5a01eea8e17889e17fe492ca8ac
+tokens:
+  preamble: 143
+  slices:
+  - 44
+  - 38
+  - 65
+  - 37
+  - 41
+  - 88
+  max_slice: 88
+stage2:
+  clean: 4/5
+  randomized: 3/3

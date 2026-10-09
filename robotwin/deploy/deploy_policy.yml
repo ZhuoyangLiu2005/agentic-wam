@@ -1,0 +1,29 @@
+# RoboTwin script/eval_policy.py entrypoint config for the agenticwam_cosmos policy.
+policy_name: agenticwam_policy
+task_name: null
+task_config: null
+ckpt_setting: null
+seed: 0
+instruction_type: unseen
+eval_num_episodes: 100
+
+# agenticwam_cosmos policy args
+sim_cfg_path: null
+sim_task: null
+sim_cfg_name: robotwin/sim_robotwin.yaml
+mixed_precision: bf16
+device: cuda
+dataset_stats_path: null
+action_horizon: null
+replan_steps: 24
+num_inference_steps: 20
+sigma_shift: null
+text_cfg_scale: 1.0
+negative_prompt: ""
+rand_device: cpu
+tiled: false
+timing_enabled: false
+skip_get_obs_within_replan: true
+
+# 2-expert (video+action); no coding expert.
+use_code_expert: false

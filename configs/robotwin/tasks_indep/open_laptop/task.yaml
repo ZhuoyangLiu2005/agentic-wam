@@ -1,0 +1,16 @@
+short: open_laptop
+gen_tokens: 64
+nis: 27
+source:
+  frozen_program: codegen/sim/programs_indep/open_laptop/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: 6e4d6ca8d7e3c50c23604ce624ff61a428922569c1250764451827c295d5d82e
+tokens:
+  preamble: 52
+  slices:
+  - 56
+  max_slice: 56

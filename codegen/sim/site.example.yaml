@@ -1,0 +1,29 @@
+# Machine-specific settings for codegen/sim. Copy to `site.yaml` (git-ignored) and edit; `source env.sh` exports it.
+# `${key}` references another key, `${repo}` is this directory, `${user}` is $USER. A variable already set in the
+# environment wins over this file.
+
+# --- required -----------------------------------------------------------------------------------------------------
+robotwin_py:   /path/to/robotwin-env/bin/python       # python with RoboTwin's dependencies (sapien, mplib, curobo, torch)
+
+# --- required for Stage B's export and slicing (make_dataset.py) --------------------------------------------------
+trainer_root:  /path/to/trainer                       # downstream training repo: LeRobot writer helpers (src/) and the slicer
+train_py:      /path/to/trainer-env/bin/python        # that repo's python (torch, pyarrow, h5py)
+
+# --- optional: uncomment to override the default shown ------------------------------------------------------------
+# robotwin_root:   ${repo}/capsim/third_party/RoboTwin                     # RoboTwin checkout (envs/, task_config/, assets)
+# slicer:          ${trainer_root}/robotwin/dataprep/slicing.py # stage-contract slicing engine
+# ffmpeg_dir:      /path/to/dir/with/ffmpeg                                # prepended to PATH if ffmpeg is not already on it
+# data_root:       ${repo}/outputs/data                                    # Stage B deliverables: <task>/{raw, lerobot, dataset.yaml}
+# agent_root:      ${repo}/outputs/agentic                                 # Stage A fix-loop / evosearch runs
+# validation_root: ${repo}/outputs/validation                              # Stage-2 freezes and replays
+# log_root:        ${repo}/outputs/logs
+# rollout_cache:   /data/local/${user}/_rollout_cache                      # host-local scratch for per-frame pkls, never NFS
+#                                                                          # (default: /data/local/$USER if it exists, else $TMPDIR)
+# vision:                                                                  # perception tier only
+#   molmo:    http://127.0.0.1:8122/v1
+#   sam3:     http://127.0.0.1:8114
+#   graspnet: http://127.0.0.1:8115
+# gpu:
+#   min_free_mib:     12000                                                # a card takes a worker at >= this much free memory
+#   replays_per_card: 2
+# trial_timeout_s:    1000                                                 # soft budget per trial, from the end of env.reset()

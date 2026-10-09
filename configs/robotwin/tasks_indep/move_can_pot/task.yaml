@@ -1,0 +1,16 @@
+short: move_can_pot
+gen_tokens: 96
+nis: 40
+source:
+  frozen_program: codegen/sim/programs_indep/move_can_pot/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: 595c39d2c3cdf9f60c5984da422c4cdadb7806e503ca68942de322922885ea89
+tokens:
+  preamble: 83
+  slices:
+  - 81
+  max_slice: 81

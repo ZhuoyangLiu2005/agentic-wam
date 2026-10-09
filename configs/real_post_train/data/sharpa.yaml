@@ -1,0 +1,191 @@
+# @package _global_
+# Post-training data for one Tianji + Sharpa (arms + 22-DoF tactile hands; 76-D raw -> unified 64-D) dataset in the SFT format (docs/DATA.md).
+# General: it names no task. Point it at a dataset with
+#   bash scripts/train_real_sharpa.sh <dataset_dir> <code_cache.pt> [overrides]
+# which sets data.dataset_root and data.code_cache. From the dataset directory it reads the shards (train_shard_*),
+# dataset_stats_eef64.json and cosmos_text_embeds_cache/. Optional: data.skill_prompt_map=<json>;
+# model.infer_code_tokens=<N> (the inference code canvas: size it to your code, default 64).
+data:
+  dataset_root: ???
+  code_cache: ???
+  skill_prompt_map: null
+  train:
+    _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+    dataset_dirs: ${lerobot_shards:${data.dataset_root}}
+    shape_meta:
+      images:
+      - key: cam_high
+        raw_shape:
+        - 3
+        - 224
+        - 320
+        shape:
+        - 3
+        - 224
+        - 320
+      - key: cam_left_wrist
+        raw_shape:
+        - 3
+        - 224
+        - 320
+        shape:
+        - 3
+        - 224
+        - 320
+      - key: cam_right_wrist
+        raw_shape:
+        - 3
+        - 224
+        - 320
+        shape:
+        - 3
+        - 224
+        - 320
+      action:
+      - key: default
+        raw_shape: 76
+        shape: 64
+      state:
+      - key: default
+        raw_shape: 76
+        shape: 64
+    num_frames: 33
+    global_sample_stride: 1
+    action_video_freq_ratio: 4
+    video_size:
+    - 224
+    - 320
+    camera_key: null
+    val_set_proportion: 0.0
+    is_training_set: true
+    pretrained_norm_stats: ${data.dataset_root}/dataset_stats_eef64.json
+    skip_padding_as_possible: false
+    concat_multi_camera: multiview
+    use_policy_code: true
+    skill_prompt_map: ${data.skill_prompt_map}
+    policy_code_coverage: 1.0
+    cosmos_text_cache_dir: ${data.dataset_root}/cosmos_text_embeds_cache
+    processor:
+      _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+      shape_meta: ${data.train.shape_meta}
+      num_obs_steps: ${data.train.num_frames}
+      num_output_cameras: 3
+      action_output_dim: 64
+      proprio_output_dim: 64
+      action_state_transforms:
+      - _target_: agenticwam.datasets.lerobot.transforms.tianji_sharpa_unified_eef.TianjiSharpaUnifiedEEFTransform
+        keys:
+        - default
+      use_stepwise_action_norm: true
+      norm_default_mode: q01/q99
+      norm_exception_mode: null
+      action_state_merger:
+        _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+      train_transforms:
+      - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+      - _target_: torchvision.transforms.Resize
+        size:
+        - 224
+        - 320
+      val_transforms:
+      - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+      - _target_: torchvision.transforms.Resize
+        size:
+        - 224
+        - 320
+    context_len: 128
+    episode_indices: null
+    policy_code_idx_path: ${data.code_cache}
+    frame_offset: 0
+    skill_prompt_only: false
+  val:
+    _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+    dataset_dirs: ${lerobot_shards:${data.dataset_root}}
+    shape_meta:
+      images:
+      - key: cam_high
+        raw_shape:
+        - 3
+        - 224
+        - 320
+        shape:
+        - 3
+        - 224
+        - 320
+      - key: cam_left_wrist
+        raw_shape:
+        - 3
+        - 224
+        - 320
+        shape:
+        - 3
+        - 224
+        - 320
+      - key: cam_right_wrist
+        raw_shape:
+        - 3
+        - 224
+        - 320
+        shape:
+        - 3
+        - 224
+        - 320
+      action:
+      - key: default
+        raw_shape: 76
+        shape: 64
+      state:
+      - key: default
+        raw_shape: 76
+        shape: 64
+    num_frames: 33
+    global_sample_stride: 1
+    action_video_freq_ratio: 4
+    video_size:
+    - 224
+    - 320
+    camera_key: null
+    val_set_proportion: 0.0
+    is_training_set: false
+    pretrained_norm_stats: ${data.dataset_root}/dataset_stats_eef64.json
+    skip_padding_as_possible: false
+    concat_multi_camera: multiview
+    use_policy_code: true
+    skill_prompt_map: ${data.skill_prompt_map}
+    policy_code_coverage: 1.0
+    cosmos_text_cache_dir: ${data.dataset_root}/cosmos_text_embeds_cache
+    processor:
+      _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+      shape_meta: ${data.train.shape_meta}
+      num_obs_steps: ${data.train.num_frames}
+      num_output_cameras: 3
+      action_output_dim: 64
+      proprio_output_dim: 64
+      action_state_transforms:
+      - _target_: agenticwam.datasets.lerobot.transforms.tianji_sharpa_unified_eef.TianjiSharpaUnifiedEEFTransform
+        keys:
+        - default
+      use_stepwise_action_norm: true
+      norm_default_mode: q01/q99
+      norm_exception_mode: null
+      action_state_merger:
+        _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+      train_transforms:
+      - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+      - _target_: torchvision.transforms.Resize
+        size:
+        - 224
+        - 320
+      val_transforms:
+      - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+      - _target_: torchvision.transforms.Resize
+        size:
+        - 224
+        - 320
+    context_len: 128
+    episode_indices: null
+    policy_code_idx_path: ${data.code_cache}
+    frame_offset: 0
+    skill_prompt_only: false
+model:
+  infer_code_tokens: 64

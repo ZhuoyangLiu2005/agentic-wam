@@ -1,0 +1,22 @@
+short: pick_dual_bottles
+gen_tokens: 104
+nis: 43
+source:
+  frozen_program: codegen/sim/programs/pick_dual_bottles/v2/frozen_program.py
+  version: v2
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: 3e179f9c2bebc4becfcdd1be813e51404c6ce5037ea7fa60e3ce4b646bbd2dee
+tokens:
+  preamble: 55
+  slices:
+  - 79
+  - 79
+  - 89
+  - 89
+  max_slice: 89
+stage2:
+  clean: 5/5
+  randomized: 3/3

@@ -1,0 +1,23 @@
+short: put_object_cabinet
+gen_tokens: 120
+nis: 50
+source:
+  frozen_program: codegen/sim/programs/put_object_cabinet/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 5
+  executed_sha256: fe4786225f91575d24559f189d836821b07baeedf428e203e193ed7c76a10df3
+tokens:
+  preamble: 213
+  slices:
+  - 52
+  - 72
+  - 67
+  - 110
+  - 101
+  max_slice: 110
+stage2:
+  clean: 3/5
+  randomized: 3/3

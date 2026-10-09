@@ -1,0 +1,27 @@
+# Aligned collection template — filled by pipeline/scripts/make_dataset.py (task_name, task_config, save_dir, oracle_code,
+# resume_idx). Hand-edit a copy only for one-off collections. `record_instructions: static` evaluates the task's own
+# placeholder rule on the finished episode (no expert rollout); alignment JSON gets placeholders / instructions.
+env:
+  _target_: capsim.envs.tasks.robotwin.robotwin_env.RoboTwinCodeEnv
+  cfg:
+    _target_: capsim.envs.tasks.base.CodeExecEnvConfig
+    low_level:
+      _target_: capsim.envs.simulators.robotwin.RoboTwinTask
+      task_name: __TASK__
+      task_config: __TASK_CONFIG__
+      embodiment: aloha-agilex
+      privileged: true
+      save_episode_data: true
+      save_dir: __SAVE_DIR__
+      record_instructions: __INSTRUCTIONS__   # static | expert | off (see capsim/envs/simulators/robotwin.py)
+      n_instructions: 10        # paraphrases kept per episode; every distinct one costs ~25 MB of trainer text cache
+    privileged: true
+    apis:
+      - RoboTwinGripperPrivilegedApi
+    oracle_code: __PROGRAM__
+api_servers: []
+record_video: false
+output_dir: __RUN_DIR__
+resume_idx: __START_SEED__
+trials: 1
+num_workers: 1

@@ -1,0 +1,133 @@
+short: place_object_scale
+gen_tokens: 80
+nis: 33
+source:
+  frozen_program: codegen/sim/programs_indep/place_object_scale/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: 0a840d9b51cbe63ef376762f9bd88669f458a7b49c76a3a9c36650c1b881a0a1
+tokens:
+  preamble: 78
+  slices:
+  - 65
+  max_slice: 65
+scene:
+  comment: 'Fixed manipulands: every listed seed spawns the SAME objects, and each seed was PROBED in that very
+    scene -- every slot''s name ladder was asked of the perception tier there and at least one name landed on the
+    right actor. Grounding is a property of (object, scene), not of the object, so seeds are not interchangeable:
+    replacing a seed with an unprobed one of the same objects is not supported by any measurement. NOTE: re-running
+    import_tasks.py rewrites this file and drops this block -- re-run apply_scene_seeds.py after any re-import.'
+  models:
+    object: mouse
+    scale: electronicscale
+  names:
+    scale: electronic scale
+    object: mouse
+  name_ladders:
+    scale:
+    - electronic scale
+    object:
+    - mouse
+  seed:
+    demo_clean: 121
+    demo_randomized: 158
+  usable_seeds:
+    demo_clean:
+    - 121
+    - 126
+    - 128
+    - 130
+    - 133
+    - 142
+    - 146
+    - 156
+    - 159
+    - 164
+    - 167
+    - 169
+    - 170
+    - 171
+    - 172
+    - 174
+    - 175
+    - 176
+    - 177
+    - 179
+    - 185
+    - 187
+    - 189
+    - 191
+    - 196
+    - 213
+    - 216
+    - 217
+    - 219
+    - 220
+    - 225
+    - 231
+    - 233
+    - 247
+    - 249
+    - 250
+    - 1007
+    - 1010
+    - 1012
+    - 1014
+    - 1015
+    - 1019
+    - 1022
+    demo_randomized:
+    - 158
+    - 173
+    - 177
+    - 178
+    - 183
+    - 185
+    - 198
+    - 202
+    - 203
+    - 209
+    - 210
+    - 216
+    - 217
+    - 218
+    - 219
+    - 223
+    - 225
+    - 226
+    - 229
+    - 234
+    - 240
+    - 247
+    - 261
+    - 262
+    - 263
+    - 265
+    - 269
+    - 270
+    - 272
+    - 273
+    - 274
+    - 286
+    - 287
+    - 289
+    - 294
+    - 295
+    - 298
+    - 2002
+    - 2003
+    - 2007
+    - 2012
+    - 2014
+    - 2022
+    - 2024
+    - 2025
+    - 2026
+    - 2027
+    - 2029
+  probe:
+    demo_clean: 43 usable of 49 probed
+    demo_randomized: 48 usable of 49 probed

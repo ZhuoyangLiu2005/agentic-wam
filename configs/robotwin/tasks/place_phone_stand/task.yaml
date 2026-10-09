@@ -1,0 +1,21 @@
+short: place_phone_stand
+gen_tokens: 104
+nis: 43
+source:
+  frozen_program: codegen/sim/programs/place_phone_stand/v2/frozen_program.py
+  version: v2
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 3
+  executed_sha256: 38cde6311ee30cb1994be5f27d2a1e2779d2aaffe8d142cac82c9a08e6844656
+tokens:
+  preamble: 92
+  slices:
+  - 48
+  - 66
+  - 93
+  max_slice: 93
+stage2:
+  clean: 5/5
+  randomized: 3/3

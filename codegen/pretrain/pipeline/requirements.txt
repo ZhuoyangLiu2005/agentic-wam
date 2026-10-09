@@ -1,0 +1,23 @@
+# codegen/real pipeline dependencies.
+#
+# Install into an ISOLATED venv (no --system-site-packages: a system cv2 built
+# without FFMPEG would shadow opencv-python-headless and every mp4 decode
+# fails with "no frames decoded"):
+#
+#   python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+#
+# The protocols refer to this interpreter as PY=.venv/bin/python.
+opencv-python-headless
+numpy
+pandas
+pyarrow
+scipy
+pillow
+requests
+pyyaml
+imageio
+imageio-ffmpeg      # without it, imageio's mp4 path falls back to a ~7x slower decoder
+
+# --- audit only (scripts/*) ----------------------------------------------
+# not imported by the actor or the gate; a labelling run does not need them
+matplotlib>=3.8

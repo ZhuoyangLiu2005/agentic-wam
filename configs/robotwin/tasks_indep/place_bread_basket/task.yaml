@@ -1,0 +1,17 @@
+short: place_bread_basket
+gen_tokens: 80
+nis: 33
+source:
+  frozen_program: codegen/sim/programs_indep/place_bread_basket/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: 8b24937d7ac3392b6624cf52101378935aedfce7d5266fc3c3f2d4f4676ff666
+tokens:
+  preamble: 58
+  slices:
+  - 72
+  - 46
+  max_slice: 72

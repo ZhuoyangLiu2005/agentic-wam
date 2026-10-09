@@ -1,0 +1,20 @@
+# RoboTwin 2.0 benchmark definition, read by robotwin/eval/benchmark.py and robotwin/eval/report.py.
+#
+# suites      which tasks (`robotwin` = all 50 RoboTwin 2.0 tasks; run a subset with --tasks a,b); protocols: the two RoboTwin 2.0 settings (Easy = clean scenes, Hard = domain-randomized);
+# plans       how many episodes per task per protocol, split into shards (one process per shard, one GPU each).
+#             Shard k runs RoboTwin seed (seed_base + k); seeds walk disjoint scene ranges, so shards never repeat a scene.
+
+suites:
+  robotwin: [adjust_bottle, beat_block_hammer, blocks_ranking_rgb, blocks_ranking_size, click_alarmclock, click_bell, dump_bin_bigbin, grab_roller, handover_block, handover_mic, hanging_mug, lift_pot, move_can_pot, move_pillbottle_pad, move_playingcard_away, move_stapler_pad, open_laptop, open_microwave, pick_diverse_bottles, pick_dual_bottles, place_a2b_left, place_a2b_right, place_bread_basket, place_bread_skillet, place_burger_fries, place_can_basket, place_cans_plasticbox, place_container_plate, place_dual_shoes, place_empty_cup, place_fan, place_mouse_pad, place_object_basket, place_object_scale, place_object_stand, place_phone_stand, place_shoe, press_stapler, put_bottles_dustbin, put_object_cabinet, rotate_qrcode, scan_object, shake_bottle, shake_bottle_horizontally, stack_blocks_three, stack_blocks_two, stack_bowls_three, stack_bowls_two, stamp_seal, turn_switch]
+
+protocols:
+  clean:      {task_config: demo_clean,      label: easy}
+  randomized: {task_config: demo_randomized, label: hard}
+
+plans:
+  standard:      # the RoboTwin 2.0 reporting protocol: 100 episodes per task and setting
+    clean:      {episodes: 100, shards: 10, seed_base: 0}
+    randomized: {episodes: 100, shards: 10, seed_base: 0}
+  smoke:         # one episode per task: checks the pipeline, not the policy
+    clean:      {episodes: 1, shards: 1, seed_base: 0}
+    randomized: {episodes: 1, shards: 1, seed_base: 0}

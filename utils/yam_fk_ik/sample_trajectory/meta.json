@@ -1,0 +1,12 @@
+{
+  "episode": "train_shard_0/episode_000000",
+  "frames": 2579,
+  "fps": 30,
+  "model": "station/station/station.xml (REAL bimanual URDF; abs EEF matches the recording's world frame)",
+  "eef_site": "left_grasp_site / right_grasp_site",
+  "sign_flip": "none",
+  "layout_14d": "[Lj0-5, Lgrip(6), Rj0-5, Rgrip(13)]",
+  "layout_64d": "per-arm [eef 9=pos3+rot6d | hand 22=0 | grip 1]; L=0:32 R=32:64; state=abs, action=delta-in-current-frame",
+  "ik_roundtrip_maxjoint_err_rad_mean": 0.0004552190831629007,
+  "ik_roundtrip_maxjoint_err_rad_p95": 0.0024959895096715308
+}

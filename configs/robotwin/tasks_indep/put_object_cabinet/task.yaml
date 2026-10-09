@@ -1,0 +1,81 @@
+short: put_object_cabinet
+gen_tokens: 112
+nis: 47
+source:
+  frozen_program: codegen/sim/programs_indep/put_object_cabinet/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: 8b4f5691e0fdc2796f1657df486fbbe3b8f90a499e39321ee20a3eb2c4daecec
+tokens:
+  preamble: 168
+  slices:
+  - 42
+  - 99
+  max_slice: 99
+scene:
+  comment: 'Fixed manipulands: every listed seed spawns the SAME objects, and each seed was PROBED in that very
+    scene -- every slot''s name ladder was asked of the perception tier there and at least one name landed on the
+    right actor. Grounding is a property of (object, scene), not of the object, so seeds are not interchangeable:
+    replacing a seed with an unprobed one of the same objects is not supported by any measurement. NOTE: re-running
+    import_tasks.py rewrites this file and drops this block -- re-run apply_scene_seeds.py after any re-import.'
+  models:
+    cabinet: cabinet
+    object: playingcards
+  names:
+    cabinet: cabinet
+    object: playing cards
+  name_ladders:
+    cabinet:
+    - cabinet
+    object:
+    - playing cards
+  seed:
+    demo_clean: 106
+    demo_randomized: 203
+  usable_seeds:
+    demo_clean:
+    - 106
+    - 123
+    - 129
+    - 130
+    - 131
+    - 132
+    - 143
+    - 144
+    - 158
+    - 165
+    - 179
+    - 180
+    - 187
+    - 194
+    - 195
+    - 219
+    - 224
+    - 225
+    - 229
+    - 236
+    - 241
+    - 1014
+    - 1015
+    - 1016
+    - 1022
+    - 1029
+    - 1034
+    - 1047
+    demo_randomized:
+    - 203
+    - 215
+    - 221
+    - 241
+    - 242
+    - 243
+    - 2008
+    - 2010
+    - 2026
+    - 2032
+  probe:
+    demo_clean: 28 usable of 28 probed
+    demo_randomized: 10 usable of 12 probed

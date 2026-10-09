@@ -1,0 +1,22 @@
+short: place_dual_shoes
+gen_tokens: 136
+nis: 57
+source:
+  frozen_program: codegen/sim/programs/place_dual_shoes/v2/frozen_program.py
+  version: v2
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 4
+  executed_sha256: 717880c2ce25cb2c30bd6dc30e54b6ec2e116b052fbaac4a3045e3aedb7c6949
+tokens:
+  preamble: 95
+  slices:
+  - 100
+  - 100
+  - 126
+  - 111
+  max_slice: 126
+stage2:
+  clean: 2/5
+  randomized: 1/3

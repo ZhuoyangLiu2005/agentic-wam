@@ -1,0 +1,20 @@
+short: place_a2b_right
+gen_tokens: 120
+nis: 50
+source:
+  frozen_program: codegen/sim/programs/place_a2b_right/v2/frozen_program.py
+  version: v2
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: 51b760de30d7131a7cac0329063784503e259c5ad406002937eac886335ad37f
+tokens:
+  preamble: 122
+  slices:
+  - 112
+  - 93
+  max_slice: 112
+stage2:
+  clean: 4/5
+  randomized: 3/3

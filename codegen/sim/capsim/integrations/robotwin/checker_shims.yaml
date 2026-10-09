@@ -1,0 +1,12 @@
+# RoboTwin tasks whose check_success() reads state that only the expert's play_once() sets. Without a shim the
+# checker raises AttributeError and every program scores 0. Keyed by task, because each entry patches one task file.
+#   manipuland: the task attribute holding the object the checker reasons about; enables the `arm_tag` shim
+#               (the arm that last closed on it, else the nearest tool centre point)
+#   origin_z:   the task attribute whose reset height the checker compares against
+open_laptop:
+  manipuland: laptop
+put_object_cabinet:
+  manipuland: object
+  origin_z: object
+place_object_scale:
+  manipuland: object

@@ -1,0 +1,63 @@
+# RoboTwin <task> / demo_clean — PRIVILEGED (GT perception + GT
+# grasp; boots no vision servers). Fastest end-to-end config: use it to
+# validate the RoboTwin integration and for privileged fix-loop runs.
+#
+# Seed policy: debug seeds are 101-105 clean
+# and 151-155 randomized (see the *_randomized.yaml sibling); validation seeds
+# 201-210 / 251-260 are LOCKED one-shot — never run them while iterating.
+# resume_idx: 101 + --args.total-trials 105 runs exactly seeds 101-105.
+#
+# Usage (source env.sh first: ROBOTWIN_PY carries sapien/mplib/curobo, PYTHONPATH has capsim):
+#   cd codegen/sim && source env.sh
+#   $ROBOTWIN_PY \
+#     -m capsim.envs.launch \
+#     --args.config-path iterate/configs/priv_clean.yaml \
+#     --args.total-trials 105
+
+env:
+  _target_: capsim.envs.tasks.robotwin.robotwin_env.RoboTwinCodeEnv
+  cfg:
+    _target_: capsim.envs.tasks.base.CodeExecEnvConfig
+    low_level:
+      _target_: capsim.envs.simulators.robotwin.RoboTwinTask
+      task_name: PLACEHOLDER_OVERRIDE_WITH_--task
+      task_config: demo_clean
+      embodiment: aloha-agilex
+      privileged: true
+    privileged: true
+    apis:
+      - RoboTwinGripperPrivilegedApiTraced
+    prompt: |
+      You are controlling a dual-arm ALOHA-AgileX robot in the RoboTwin simulator with the API described below.
+      Goal: Complete the task described under "TASK GOAL" above.
+      hand is the string "left" or "right". All poses are world-frame (position in metres, quaternion WXYZ).
+      Motion functions return False when motion planning fails. Perception functions can raise an exception on a failed grounding. The two arms do NOT avoid each other automatically.
+      You may write python code comments for reasoning but ONLY write the executable Python code and do not write it in code fences.
+      The functions (APIs) below are already imported to the environment. If you want to use numpy, you need to import it explicitly.
+
+    multi_turn_prompt: |
+      The following code blocks were just executed:
+      ```python
+      {executed_code}
+      ```
+      The current console stdout is:
+      ```
+      {console_stdout}
+      ```
+      The current console stderr is:
+      ```
+      {console_stderr}
+      ```
+      If there were no errors during compilation or execution, the console stderr will be empty. If there were errors, consider regenerating the code.
+      Please respond with EXACTLY ONE of the following:
+      - The word 'REGENERATE' followed immediately by new Python code in a fenced code block (```python...```) if you want to write new code.
+      - The word 'FINISH' if the task appears to be complete
+
+api_servers: []
+
+record_video: true
+output_dir: ./outputs/validation/replay      # replay_trial.py overrides this from $CODEGEN_SIM_VALIDATION_ROOT
+
+resume_idx: 101
+trials: 105
+num_workers: 1

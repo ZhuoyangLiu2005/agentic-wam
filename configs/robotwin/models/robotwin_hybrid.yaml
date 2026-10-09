@@ -1,0 +1,13 @@
+# Model preset: robotwin_hybrid (codegen/sim-collected data, 50 tasks, 14-D joint, trained on
+# per-stage code slices; hybrid-capable). eval_task robotwin_hybrid carries code_canvas 124 and max_code_tokens 512,
+# the values it trains with. Pass --gen-tokens 124 too: launch.py's measured per-task canvas outranks this default.
+run:          ${robotwin_hybrid_run}
+eval_task:    robotwin_hybrid
+action_space: ""
+action_dim:   14
+proprio_dim:  14
+code_model:   ${code_model}
+no_history:   1
+gen_tokens:   124
+nis:          40
+replan:       24

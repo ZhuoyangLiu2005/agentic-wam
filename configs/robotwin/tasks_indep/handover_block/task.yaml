@@ -1,0 +1,17 @@
+short: handover_block
+gen_tokens: 96
+nis: 40
+source:
+  frozen_program: codegen/sim/programs_indep/handover_block/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: aae170da1435fd6bd99bf650df5c7b7ff1db5c3608c1917a60a39f028df6ceca
+tokens:
+  preamble: 151
+  slices:
+  - 67
+  - 87
+  max_slice: 87

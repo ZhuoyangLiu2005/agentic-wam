@@ -1,0 +1,18 @@
+short: place_bread_skillet
+gen_tokens: 112
+nis: 47
+source:
+  frozen_program: codegen/sim/programs_indep/place_bread_skillet/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 3
+  executed_sha256: f32f175e293bb92c7eadb2f7f5c2d8f1703409c32f932c78eeeb80427ff20400
+tokens:
+  preamble: 172
+  slices:
+  - 75
+  - 82
+  - 104
+  max_slice: 104

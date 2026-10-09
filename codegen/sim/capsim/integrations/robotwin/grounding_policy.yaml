@@ -1,0 +1,51 @@
+# Grounding policy: the tuning values of the perception-tier API (capsim/integrations/robotwin/base.py) and its
+# grasp ranking (grasp_candidates.py). Units are metres unless stated. These are properties of the perception
+# stack, not of the robot (see capsim/profiles/) or of object names (see object_vocab.yaml).
+
+motion:
+  goto_miss_limit: .inf          # max achieved-vs-commanded fingertip error before goto_pose fails; .inf = off
+
+workspace:                       # grounding sanity gate, relative to the live table pose
+  edge_margin: 0.05              # tolerance beyond the table edge
+  below_surface: 0.04            # depth-noise tolerance below the tabletop
+  above_surface: 0.35            # max plausible object height above the tabletop
+  max_object_extent: 0.40        # object scale; wall / table segments are far larger
+
+fusion:                          # multiview fusion (sensor-error scale)
+  view_consistency: 0.01         # two views see the same object
+  point_merge: 0.015             # looser admits a skirt of neighbouring points that inflates extents
+  point_dedupe_px: 12            # Molmo points closer than this (pixels) are one instance
+  instance_merge: 0.03           # xy centroids closer than this are one object
+
+segmentation:
+  min_score: 0.5                 # SAM3 phantom-mask gate: below it a head view fails the grounding, an aux view is skipped
+  soft_score: 0.35               # [soft_score, min_score) is accepted on the head view only with the mask-size gate
+  mask_frac_min: 0.001           # mask area as a fraction of the image (rejects slivers)
+  mask_frac_max: 0.20            # (rejects table blobs)
+  max_extent_xy: 0.60            # plausible object footprint (bins, microwaves, baskets reach 0.4-0.5 m)
+  max_extent_z: 0.80
+
+held:
+  attach: 0.06                   # a name whose last pose is this close to the closing fingertip is held
+
+spatial:                         # "leftmost / rightmost / middle X"
+  enabled: true                  # env CAPX_SPATIAL_RESOLVER=0 disables
+  continuity: 0.08               # an ordinal that cannot be re-ranked keeps its identity within this radius
+  occlude: 0.12                  # a fingertip this close (xy) to the phrase's last position occludes it
+
+superlative:                     # "largest / smallest / medium X"
+  enabled: true                  # env CAPX_SUPERLATIVE_RESOLVER=0 disables
+  rank_repeats: 3                # enumerations whose median size locks the ranking (env CAPX_RANK_REPEATS)
+  size_key: null                 # footprint | height | volume; null = chosen per episode (env CAPX_SIZE_KEY)
+
+grasp:
+  feasibility_top_k: 10          # min GraspNet candidates (by score) taken into the ranking
+  probe_backoff: 0.10            # z_approach used to probe a candidate's approach leg
+  jaw_distance_weight: 0.5       # weight of the jaw-line-to-centre distance in the ranking key
+  score_order: true              # keep GraspNet's score order among filtered candidates (false = geometric re-rank)
+  flat_height: 0.03              # objects thinner than this are grasped top-down only
+  off_centre_gate: 0.4           # off-centre gate as a fraction of the long side (compact objects)
+  panel_rms: 0.008               # max plane-fit residual of a panel's top slab
+  panel_tilt_deg: [15.0, 70.0]   # panel inclination for an edge clamp
+  panel_span: 0.06               # min length of the free edge
+  panel_inset: 0.005             # fingertip this far in from the free edge

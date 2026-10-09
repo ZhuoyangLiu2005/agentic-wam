@@ -1,0 +1,51 @@
+# RoboTwin code-stream data config BASE: shared anchors used by data_config.py (same directory).
+# 14-D absolute joint actions, 3 cameras 224x320, per-dataset slice/cycle caches, no-history code prompt.
+
+_shape_meta: &shape_meta
+  images:
+    - {key: cam_high,        raw_shape: [3,480,640], shape: [3,224,320]}
+    - {key: cam_left_wrist,  raw_shape: [3,480,640], shape: [3,224,320]}
+    - {key: cam_right_wrist, raw_shape: [3,480,640], shape: [3,224,320]}
+  action: [{key: default, raw_shape: 14, shape: 14}]
+  state:  [{key: default, raw_shape: 14, shape: 14}]
+
+_processor: &processor
+  _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+  shape_meta: *shape_meta
+  num_obs_steps: 33
+  num_output_cameras: 3
+  action_output_dim: 14
+  proprio_output_dim: 14
+  action_state_transforms: []          # 14-D ABSOLUTE joint (no delta/EEF, no IK)
+  use_stepwise_action_norm: False
+  norm_default_mode: "q01/q99"
+  norm_exception_mode: null
+  action_state_merger: {_target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign}
+  train_transforms:
+    - {_target_: agenticwam.datasets.lerobot.transforms.image.ToTensor}
+    - {_target_: torchvision.transforms.Resize, size: [224, 320]}
+  val_transforms:
+    - {_target_: agenticwam.datasets.lerobot.transforms.image.ToTensor}
+    - {_target_: torchvision.transforms.Resize, size: [224, 320]}
+
+_common: &common
+  _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+  shape_meta: *shape_meta
+  num_frames: 33
+  global_sample_stride: 1
+  action_video_freq_ratio: 4
+  video_size: [224, 320]
+  camera_key: null
+  val_set_proportion: 0.0
+  is_training_set: true
+  pretrained_norm_stats: __NORM_STATS__
+  skip_padding_as_possible: false
+  concat_multi_camera: "multiview"
+  use_policy_code: true
+  policy_code_cache_dir: null
+  policy_code_coverage: 1.0
+  code_slices: true
+  code_slices_no_history: true      # no '# Completed:' block in the prompt; progress from vision
+  processor: *processor
+  context_len: 128
+

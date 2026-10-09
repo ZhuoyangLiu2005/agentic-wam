@@ -1,0 +1,20 @@
+short: click_bell
+gen_tokens: 136
+nis: 57
+source:
+  frozen_program: codegen/sim/programs/click_bell/v2/frozen_program.py
+  version: v2
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: 9ca1b12c33b6ca430744bae913ee67f873f30268f7296aeb8dafe75a4fee8d2a
+tokens:
+  preamble: 64
+  slices:
+  - 124
+  - 103
+  max_slice: 124
+stage2:
+  clean: 5/5
+  randomized: 3/3

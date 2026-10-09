@@ -1,0 +1,16 @@
+short: turn_switch
+gen_tokens: 48
+nis: 20
+source:
+  frozen_program: codegen/sim/programs_indep/turn_switch/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: 2764b37c4c367747e5ef2f0530931ad5c5bbf567c2c90f01a7da9f139b57b69a
+tokens:
+  preamble: 15
+  slices:
+  - 36
+  max_slice: 36

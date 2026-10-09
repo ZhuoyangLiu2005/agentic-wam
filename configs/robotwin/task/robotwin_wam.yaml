@@ -1,0 +1,28 @@
+# @package _global_
+# RoboTwin WAM: the 50-task RoboTwin 2.0 suite on the official expert demonstrations (50 clean episodes per task),
+# 14-D joint actions (docs/ROBOTWIN.md section 4);
+# no CFG stream dropout (train_robotwin.sh leaves AGENTICWAM_CFG_DROPOUT unset).
+#   train:     bash scripts/train_robotwin.sh robotwin_wam
+#   evaluate:  python robotwin/eval/benchmark.py --model robotwin_wam --ckpt <step.pt>
+defaults:
+  - override /data: robotwin_official
+  - override /model: agenticwam_cosmos
+  - _self_
+
+batch_size: 2
+num_workers: 8
+model:
+  action_dim: 14
+  proprio_dim: 14
+  infer_code_tokens: 128          # eval canvas: real code is p95 100 / max 126 tokens; the 512 cap would be OOD
+lr_scheduler_type: cosine
+learning_rate: 1e-4
+weight_decay: 1e-2
+num_epochs: 1
+max_steps: 200000
+save_every: 20000
+log_every: 20
+eval_every: 999999
+gradient_accumulation_steps: 1
+resume: null
+foundation_ckpt: ${paths.robotwin_wam_init_ckpt}

@@ -1,0 +1,28 @@
+# Private helpers, experiments, snapshots and notes at any directory depth.
+local/
+
+# Runtime artifacts.
+!outputs/
+outputs/*
+!outputs/.gitkeep
+frozen/
+logs/
+nohup.out
+
+# Python environments and caches.
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv*
+
+# Machine-specific runtime configuration (start from site.example.yaml).
+site.yaml
+
+# External checkouts stay at their runtime paths; see capsim/third_party/README.md.
+capsim/third_party/RoboTwin
+capsim/third_party/contact_graspnet_pytorch
+capsim/third_party/sam3
+capsim/third_party/*.log
+
+# Keep the shared agent runbooks and prompts publishable.
+!.claude/

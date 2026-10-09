@@ -1,0 +1,64 @@
+# Object vocabulary: facts about the NOUNS programs use to name objects. The perception tier sees only the noun,
+# so every per-object behaviour of the API is keyed here by words - never by task name or simulator asset.
+# A word list matches a name when one of its entries occurs as a whole word (case-insensitive). Extend a list
+# to teach the API a new object; no code change is needed.
+
+origin:                           # where an object's pose origin sits (the privileged tier's actor convention)
+  centre_words: [block, blocks, cube, cubes]                  # origin at the object's centre
+  centre_names:                                               # same, but only when the name is exactly one of these
+    names: [box, pot, switch, microwave, cabinet]
+    prefixes: [the, target]
+  lying_cylinder_words: [bottle, roller, rolling pin, microphone, mic, hammer]   # can lie on the table as a cylinder
+  base_end_words: [bottle]                                    # lying: origin at the base end, not on the axis centre
+  floor_words: [dustbin, trash, bin, basket on the floor]     # stands on the floor beside the table
+  tabletop_words: [table, tabletop, desk, desktop, counter]   # overrides floor_words ("table trash bin")
+
+grasp:                            # grasp-family hints for the perception-tier grasp ranking
+  rim_words: [bowl, mug, cup, basket, container, bin, dustbin, pot, tray, plate]   # taken by the rim; off-centre is fine
+  top_edge_words: [bowl, mug, cup, basket, container, bin, dustbin, trash, clock, stapler, fan, board, qrcode, laptop, lid, bag, box]
+  tall_words: [bottle, bottles, pillbottle, can, cans, handle, scanner]            # grasped from the side when standing
+  panel_words: [laptop, notebook computer]                                          # tilted panel: pinch the free edge
+
+aliases:                          # perception retries, tried only after the literal name fails on the head view
+  breadbasket: [bread basket, basket]
+  bread basket: [basket]
+  playing card: [pack of cards, card box, cards]
+  playing cards: [pack of cards, card box, cards]
+  pillbottle: [pill bottle, bottle]
+  pill bottle: [bottle]
+  table trash bin: [small trash can, trash can, bin]
+  dustbin: [trash can, bin]
+  coaster: [round mat, mat]
+  hamburg: [wrapped food, food, wrapped burger, hamburger]
+  bread: [loaf of bread, bread roll]
+  french fries: [fries, box of fries]
+  toy car: [car, toy]
+  alarm clock: [clock, small round clock]
+  water bottle: [bottle]
+  scanner: [barcode scanner, scan gun]
+  cup: [mug, glass, paper cup]
+  mug: [cup]
+  stapler: [office stapler]
+  fan: [small fan, desk fan]
+compound_heads: [bottle, basket, box, bin, pad, stand, cup]   # "breadbasket" -> "bread basket", "basket"
+
+superlatives:                     # size superlative -> rank among instances sorted by size (mid = middle one)
+  largest: -1
+  biggest: -1
+  smallest: 0
+  tiniest: 0
+  medium: mid
+spatial_ordinals:                 # -> rank among instances sorted by world x (-x = the robot's left)
+  leftmost: 0
+  rightmost: -1
+  middle: mid
+
+asset_nouns:                      # RoboTwin asset stems whose closed compound is not a word -> the noun programs use
+  electronicscale: electronic scale
+  displaystand: display stand
+  playingcards: playing cards
+  rubikscube: rubiks cube
+  toycar: toy car
+  woodenblock: wooden block
+  remotecontrol: remote control
+  alarm-clock: alarm clock

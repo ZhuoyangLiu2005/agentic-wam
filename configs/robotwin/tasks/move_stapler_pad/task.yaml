@@ -1,0 +1,22 @@
+short: move_stapler_pad
+gen_tokens: 120
+nis: 50
+source:
+  frozen_program: codegen/sim/programs/move_stapler_pad/v2/frozen_program.py
+  version: v2
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 4
+  executed_sha256: a27cae30a96164378494052147c5c5d15149570b4579dd155a0952bff3b97ca4
+tokens:
+  preamble: 177
+  slices:
+  - 105
+  - 100
+  - 78
+  - 83
+  max_slice: 105
+stage2:
+  clean: 4/5
+  randomized: 3/3

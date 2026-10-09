@@ -1,0 +1,16 @@
+short: click
+gen_tokens: 72
+nis: 30
+source:
+  frozen_program: codegen/sim/programs_indep/click_alarmclock/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: c6e4c04eda5cf0c68093fdf5af9d55b5eb8e02e00ceecb689236c3fa2427c385
+tokens:
+  preamble: 52
+  slices:
+  - 60
+  max_slice: 60

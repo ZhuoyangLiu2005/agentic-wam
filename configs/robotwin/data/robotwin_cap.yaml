@@ -1,0 +1,6376 @@
+# RoboTwin demonstrations collected by executing frozen programs with codegen/sim, 50 tasks, 14-D joint, with
+# per-stage code slices (docs/ROBOTWIN.md sections 2-3). Written by robotwin/dataprep (as cap50_indep_n1).
+_shape_meta:
+  images:
+  - key: cam_high
+    raw_shape:
+    - 3
+    - 480
+    - 640
+    shape:
+    - 3
+    - 224
+    - 320
+  - key: cam_left_wrist
+    raw_shape:
+    - 3
+    - 480
+    - 640
+    shape:
+    - 3
+    - 224
+    - 320
+  - key: cam_right_wrist
+    raw_shape:
+    - 3
+    - 480
+    - 640
+    shape:
+    - 3
+    - 224
+    - 320
+  action:
+  - key: default
+    raw_shape: 14
+    shape: 14
+  state:
+  - key: default
+    raw_shape: 14
+    shape: 14
+_processor:
+  _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+  shape_meta:
+    images:
+    - key: cam_high
+      raw_shape:
+      - 3
+      - 480
+      - 640
+      shape:
+      - 3
+      - 224
+      - 320
+    - key: cam_left_wrist
+      raw_shape:
+      - 3
+      - 480
+      - 640
+      shape:
+      - 3
+      - 224
+      - 320
+    - key: cam_right_wrist
+      raw_shape:
+      - 3
+      - 480
+      - 640
+      shape:
+      - 3
+      - 224
+      - 320
+    action:
+    - key: default
+      raw_shape: 14
+      shape: 14
+    state:
+    - key: default
+      raw_shape: 14
+      shape: 14
+  num_obs_steps: 33
+  num_output_cameras: 3
+  action_output_dim: 14
+  proprio_output_dim: 14
+  action_state_transforms: []
+  use_stepwise_action_norm: false
+  norm_default_mode: q01/q99
+  norm_exception_mode: null
+  action_state_merger:
+    _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+  train_transforms:
+  - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+  - _target_: torchvision.transforms.Resize
+    size:
+    - 224
+    - 320
+  val_transforms:
+  - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+  - _target_: torchvision.transforms.Resize
+    size:
+    - 224
+    - 320
+_common:
+  _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+  shape_meta:
+    images:
+    - key: cam_high
+      raw_shape:
+      - 3
+      - 480
+      - 640
+      shape:
+      - 3
+      - 224
+      - 320
+    - key: cam_left_wrist
+      raw_shape:
+      - 3
+      - 480
+      - 640
+      shape:
+      - 3
+      - 224
+      - 320
+    - key: cam_right_wrist
+      raw_shape:
+      - 3
+      - 480
+      - 640
+      shape:
+      - 3
+      - 224
+      - 320
+    action:
+    - key: default
+      raw_shape: 14
+      shape: 14
+    state:
+    - key: default
+      raw_shape: 14
+      shape: 14
+  num_frames: 33
+  global_sample_stride: 1
+  action_video_freq_ratio: 4
+  video_size:
+  - 224
+  - 320
+  camera_key: null
+  val_set_proportion: 0.0
+  is_training_set: true
+  pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+  skip_padding_as_possible: false
+  concat_multi_camera: multiview
+  use_policy_code: true
+  policy_code_cache_dir: null
+  policy_code_coverage: 1.0
+  code_slices: true
+  code_slices_no_history: true
+  processor:
+    _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+    shape_meta:
+      images:
+      - key: cam_high
+        raw_shape:
+        - 3
+        - 480
+        - 640
+        shape:
+        - 3
+        - 224
+        - 320
+      - key: cam_left_wrist
+        raw_shape:
+        - 3
+        - 480
+        - 640
+        shape:
+        - 3
+        - 224
+        - 320
+      - key: cam_right_wrist
+        raw_shape:
+        - 3
+        - 480
+        - 640
+        shape:
+        - 3
+        - 224
+        - 320
+      action:
+      - key: default
+        raw_shape: 14
+        shape: 14
+      state:
+      - key: default
+        raw_shape: 14
+        shape: 14
+    num_obs_steps: 33
+    num_output_cameras: 3
+    action_output_dim: 14
+    proprio_output_dim: 14
+    action_state_transforms: []
+    use_stepwise_action_norm: false
+    norm_default_mode: q01/q99
+    norm_exception_mode: null
+    action_state_merger:
+      _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+    train_transforms:
+    - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+    - _target_: torchvision.transforms.Resize
+      size:
+      - 224
+      - 320
+    val_transforms:
+    - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+    - _target_: torchvision.transforms.Resize
+      size:
+      - 224
+      - 320
+  context_len: 128
+train:
+  _target_: agenticwam.datasets.lerobot.deadline_dataset.DeadlineDataset
+  seconds: 60.0
+  max_retries: 2
+  dataset:
+    _target_: torch.utils.data.ConcatDataset
+    datasets:
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/adjust_bottle/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/adjust_bottle/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/adjust_bottle/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/adjust_bottle/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/adjust_bottle
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/beat_block_hammer/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/beat_block_hammer/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/beat_block_hammer/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/beat_block_hammer/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/beat_block_hammer
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/blocks_ranking_rgb/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/blocks_ranking_rgb/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/blocks_ranking_rgb/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/blocks_ranking_rgb/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/blocks_ranking_rgb
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/blocks_ranking_size/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/blocks_ranking_size/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/blocks_ranking_size/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/blocks_ranking_size/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/blocks_ranking_size
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/click_alarmclock/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/click_alarmclock/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/click_alarmclock/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/click_alarmclock/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/click_alarmclock
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/click_bell/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/click_bell/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/click_bell/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/click_bell/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/click_bell
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/dump_bin_bigbin/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/dump_bin_bigbin/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/dump_bin_bigbin/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/dump_bin_bigbin/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/dump_bin_bigbin
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/grab_roller/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/grab_roller/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/grab_roller/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/grab_roller/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/grab_roller
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/handover_block/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/handover_block/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/handover_block/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/handover_block/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/handover_block
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/handover_mic/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/handover_mic/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/handover_mic/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/handover_mic/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/handover_mic
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/hanging_mug/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/hanging_mug/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/hanging_mug/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/hanging_mug/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/hanging_mug
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/lift_pot/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/lift_pot/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/lift_pot/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/lift_pot/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/lift_pot
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/move_can_pot/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/move_can_pot/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/move_can_pot/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/move_can_pot/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/move_can_pot
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/move_pillbottle_pad/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/move_pillbottle_pad/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/move_pillbottle_pad/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/move_pillbottle_pad/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/move_pillbottle_pad
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/move_playingcard_away/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/move_playingcard_away/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/move_playingcard_away/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/move_playingcard_away/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/move_playingcard_away
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/move_stapler_pad/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/move_stapler_pad/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/move_stapler_pad/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/move_stapler_pad/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/move_stapler_pad
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/open_laptop/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/open_laptop/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/open_laptop/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/open_laptop/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/open_laptop
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/open_microwave/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/open_microwave/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/open_microwave/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/open_microwave/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/open_microwave
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/pick_diverse_bottles/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/pick_diverse_bottles/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/pick_diverse_bottles/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/pick_diverse_bottles/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/pick_diverse_bottles
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/pick_dual_bottles/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/pick_dual_bottles/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/pick_dual_bottles/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/pick_dual_bottles/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/pick_dual_bottles
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_a2b_left/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_a2b_left/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_a2b_left/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_a2b_left/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_a2b_left
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_a2b_right/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_a2b_right/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_a2b_right/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_a2b_right/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_a2b_right
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_bread_basket/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_bread_basket/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_bread_basket/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_bread_basket/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_bread_basket
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_bread_skillet/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_bread_skillet/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_bread_skillet/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_bread_skillet/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_bread_skillet
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_burger_fries/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_burger_fries/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_burger_fries/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_burger_fries/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_burger_fries
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_can_basket/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_can_basket/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_can_basket/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_can_basket/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_can_basket
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_cans_plasticbox/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_cans_plasticbox/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_cans_plasticbox/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_cans_plasticbox/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_cans_plasticbox
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_container_plate/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_container_plate/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_container_plate/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_container_plate/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_container_plate
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_dual_shoes/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_dual_shoes/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_dual_shoes/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_dual_shoes/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_dual_shoes
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_empty_cup/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_empty_cup/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_empty_cup/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_empty_cup/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_empty_cup
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_fan/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_fan/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_fan/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_fan/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_fan
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_mouse_pad/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_mouse_pad/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_mouse_pad/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_mouse_pad/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_mouse_pad
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_object_basket/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_object_basket/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_object_basket/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_object_basket/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_object_basket
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_object_scale/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_object_scale/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_object_scale/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_object_scale/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_object_scale
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_object_stand/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_object_stand/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_object_stand/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_object_stand/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_object_stand
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_phone_stand/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_phone_stand/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_phone_stand/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_phone_stand/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_phone_stand
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/place_shoe/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/place_shoe/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/place_shoe/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/place_shoe/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/place_shoe
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/press_stapler/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/press_stapler/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/press_stapler/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/press_stapler/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/press_stapler
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/put_bottles_dustbin/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/put_bottles_dustbin/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/put_bottles_dustbin/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/put_bottles_dustbin/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/put_bottles_dustbin
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/put_object_cabinet/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/put_object_cabinet/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/put_object_cabinet/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/put_object_cabinet/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/put_object_cabinet
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/rotate_qrcode/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/rotate_qrcode/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/rotate_qrcode/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/rotate_qrcode/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/rotate_qrcode
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/scan_object/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/scan_object/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/scan_object/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/scan_object/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/scan_object
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/shake_bottle/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/shake_bottle/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/shake_bottle/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/shake_bottle/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/shake_bottle
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/shake_bottle_horizontally/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/shake_bottle_horizontally/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/shake_bottle_horizontally/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/shake_bottle_horizontally/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/shake_bottle_horizontally
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/stack_blocks_three/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/stack_blocks_three/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/stack_blocks_three/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/stack_blocks_three/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/stack_blocks_three
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/stack_blocks_two/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/stack_blocks_two/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/stack_blocks_two/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/stack_blocks_two/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/stack_blocks_two
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/stack_bowls_three/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/stack_bowls_three/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/stack_bowls_three/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/stack_bowls_three/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/stack_bowls_three
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/stack_bowls_two/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/stack_bowls_two/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/stack_bowls_two/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/stack_bowls_two/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/stack_bowls_two
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/stamp_seal/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/stamp_seal/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/stamp_seal/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/stamp_seal/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/stamp_seal
+    - _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+      shape_meta:
+        images:
+        - key: cam_high
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_left_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        - key: cam_right_wrist
+          raw_shape:
+          - 3
+          - 480
+          - 640
+          shape:
+          - 3
+          - 224
+          - 320
+        action:
+        - key: default
+          raw_shape: 14
+          shape: 14
+        state:
+        - key: default
+          raw_shape: 14
+          shape: 14
+      num_frames: 33
+      global_sample_stride: 1
+      action_video_freq_ratio: 4
+      video_size:
+      - 224
+      - 320
+      camera_key: null
+      val_set_proportion: 0.0
+      is_training_set: true
+      pretrained_norm_stats: ${paths.robotwin_official}/dataset_stats.json
+      skip_padding_as_possible: false
+      concat_multi_camera: multiview
+      use_policy_code: true
+      policy_code_cache_dir: null
+      policy_code_coverage: 1.0
+      code_slices: true
+      code_slices_no_history: true
+      processor:
+        _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+        shape_meta:
+          images:
+          - key: cam_high
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_left_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          - key: cam_right_wrist
+            raw_shape:
+            - 3
+            - 480
+            - 640
+            shape:
+            - 3
+            - 224
+            - 320
+          action:
+          - key: default
+            raw_shape: 14
+            shape: 14
+          state:
+          - key: default
+            raw_shape: 14
+            shape: 14
+        num_obs_steps: 33
+        num_output_cameras: 3
+        action_output_dim: 14
+        proprio_output_dim: 14
+        action_state_transforms: []
+        use_stepwise_action_norm: false
+        norm_default_mode: q01/q99
+        norm_exception_mode: null
+        action_state_merger:
+          _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+        train_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+        val_transforms:
+        - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+        - _target_: torchvision.transforms.Resize
+          size:
+          - 224
+          - 320
+      context_len: 128
+      dataset_dirs:
+      - ${paths.robotwin_cap}/turn_switch/lerobot/robotwin2.0
+      episode_indices: ${paths.robotwin_cap_slices}/turn_switch/raw/slices/episodes_train.json
+      code_slices_cache_dir: ${paths.robotwin_cap_slices}/turn_switch/raw/slices/slices_ep
+      cycle_cache_path: ${paths.robotwin_cap_slices}/turn_switch/raw/slices/cycle_by_idx.pt
+      cosmos_text_cache_dir: ${paths.robotwin_cap}/_text_cache/turn_switch
+val: null

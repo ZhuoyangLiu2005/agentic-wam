@@ -1,0 +1,76 @@
+# Training artifacts and checkpoints
+runs/
+ckpts/
+checkpoints/
+data_local/
+third_party/ffmpeg7-lib/
+evaluate_results/
+*.pt
+*.mp4
+
+# Log files
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+reports/
+*.bak
+*.bak_*
+wandb/
+
+# codegen/pretrain is TRACKED (skill libraries + the labeling pipeline are project content).
+# Only its run artifacts are ignored -- a blanket ignore here silently hid the robotwin /
+# embodiment adapters from the repo.
+codegen/pretrain/pipeline/outputs/
+codegen/pretrain/pipeline/*.log
+codegen/pretrain/**/.nvinferencekeys
+
+# generated
+_deps/
+.torchinductor_cache*/
+.wandb_env
+units_*.txt
+*.tgz
+outputs/
+*.b64
+
+# research artifacts / scratch
+reports/openloop_eval/
+reports/logs/
+*.bak*
+
+# credentials
+.vlm_api_key
+.nvinferencekeys*
+.wandb_env
+hf_api_key.txt
+
+# hybrid eval: machine-specific site config (template: site.example.yaml)
+configs/robotwin/site.yaml
+
+# Per-machine paths files (configs/paths/<machine>.yaml); only the template is tracked
+configs/paths/*.yaml
+!configs/paths/default.yaml

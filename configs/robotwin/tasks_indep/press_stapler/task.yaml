@@ -1,0 +1,16 @@
+short: press_stapler
+gen_tokens: 88
+nis: 37
+source:
+  frozen_program: codegen/sim/programs_indep/press_stapler/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: 74db275bbb98e97485fc6204f9f78874274ebdfb2627b76712b272bab53afb92
+tokens:
+  preamble: 35
+  slices:
+  - 73
+  max_slice: 73

@@ -1,0 +1,22 @@
+short: handover_mic
+gen_tokens: 128
+nis: 53
+source:
+  frozen_program: codegen/sim/programs/handover_mic/v2/frozen_program.py
+  version: v2
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 4
+  executed_sha256: a1122fea6d26f162fe4cb01f9982cc80d548ce8a531746b56468b95fa29f895f
+tokens:
+  preamble: 196
+  slices:
+  - 80
+  - 111
+  - 65
+  - 118
+  max_slice: 118
+stage2:
+  clean: 5/5
+  randomized: 1/3

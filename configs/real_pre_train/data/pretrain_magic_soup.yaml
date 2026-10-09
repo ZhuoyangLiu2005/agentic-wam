@@ -1,0 +1,118 @@
+# Pretraining data: a YAM robot source + an ego (egocentric human-hand) source, unified 64-D, with code labels.
+# Each source is one dataset directory in the standard layout (docs/PRETRAINING.md §1):
+#   <root>/train_shard_*/            LeRobot v2.0/v2.1 datasets
+#   <root>/dataset_stats_eef64.json  64-D normalisation stats      (utils/make_stats.py --transform yam|ego)
+#   <root>/cosmos_text_embeds_cache/ instruction embeddings        (scripts/precompute_cosmos_text_embeds.py)
+#   <root>/policy_code_idx.pt        flat code labels              (scripts/pretrain_annotation.sh flatten)
+# Set the two roots on the command line or here:
+#   python scripts/launch_train.py --task pretrain_magic_soup data.yam_root=<dir> data.ego_root=<dir>
+# The mixture is ConcatDataset over frames, so the sources are sampled in proportion to their frame counts.
+yam_root: ???
+ego_root: ???
+yam_code_cache: ${data.yam_root}/policy_code_idx.pt
+ego_code_cache: ${data.ego_root}/policy_code_idx.pt
+
+_image_transforms: &image_transforms
+  - _target_: agenticwam.datasets.lerobot.transforms.image.ToTensor
+  - _target_: torchvision.transforms.Resize
+    size: [224, 320]
+
+sources:
+  yam: &yam_source                # bimanual arms + parallel grippers, 3 cameras, 82-D raw
+    _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+    dataset_dirs: ${lerobot_shards:${data.yam_root}}
+    shape_meta: &yam_shape_meta
+      images:
+        - {key: cam_high,        raw_shape: [3, 224, 320], shape: [3, 224, 320]}
+        - {key: cam_left_wrist,  raw_shape: [3, 224, 320], shape: [3, 224, 320]}
+        - {key: cam_right_wrist, raw_shape: [3, 224, 320], shape: [3, 224, 320]}
+      action: [{key: default, raw_shape: 82, shape: 64}]
+      state:  [{key: default, raw_shape: 82, shape: 64}]
+    num_frames: 33                # a 32-step action chunk + the current frame
+    global_sample_stride: 1
+    action_video_freq_ratio: 4    # one video frame per 4 action steps
+    video_size: [224, 320]
+    camera_key: null
+    val_set_proportion: 0.0
+    is_training_set: true
+    pretrained_norm_stats: ${data.yam_root}/dataset_stats_eef64.json
+    skip_padding_as_possible: false
+    concat_multi_camera: multiview
+    use_policy_code: true
+    policy_code_idx_path: ${data.yam_code_cache}
+    code_slices: false
+    cycle_cache_path: null
+    cosmos_text_cache_dir: ${data.yam_root}/cosmos_text_embeds_cache
+    context_len: 128
+    frame_offset: 0
+    processor:
+      _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+      shape_meta: *yam_shape_meta
+      num_obs_steps: 33
+      num_output_cameras: 3
+      action_output_dim: 64
+      proprio_output_dim: 64
+      action_state_transforms:
+        - {_target_: agenticwam.datasets.lerobot.transforms.yam_unified_eef.YamUnifiedEEFTransform, keys: [default]}
+      use_stepwise_action_norm: true
+      norm_default_mode: q01/q99
+      norm_exception_mode: null
+      action_state_merger:
+        _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+      train_transforms: *image_transforms
+      val_transforms: *image_transforms
+
+  ego: &ego_source                # egocentric human hands, 1 head camera (repeated into the 3 camera slots), 76-D raw
+    _target_: agenticwam.datasets.lerobot.robot_video_dataset.RobotVideoDataset
+    dataset_dirs: ${lerobot_shards:${data.ego_root}}
+    shape_meta: &ego_shape_meta
+      images:
+        - {key: cam_high, raw_shape: [3, 224, 320], shape: [3, 224, 320]}
+      action: [{key: default, raw_shape: 76, shape: 64}]
+      state:  [{key: default, raw_shape: 76, shape: 64}]
+    num_frames: 33
+    global_sample_stride: 1
+    action_video_freq_ratio: 4
+    video_size: [224, 320]
+    camera_key: null
+    val_set_proportion: 0.0
+    is_training_set: true
+    pretrained_norm_stats: ${data.ego_root}/dataset_stats_eef64.json
+    skip_padding_as_possible: false
+    concat_multi_camera: multiview
+    use_policy_code: true
+    policy_code_idx_path: ${data.ego_code_cache}
+    code_slices: false
+    cycle_cache_path: null
+    cosmos_text_cache_dir: ${data.ego_root}/cosmos_text_embeds_cache
+    context_len: 128
+    frame_offset: 0
+    processor:
+      _target_: agenticwam.datasets.lerobot.processors.agenticwam_processor.AgenticWAMProcessor
+      shape_meta: *ego_shape_meta
+      num_obs_steps: 33
+      num_output_cameras: 3
+      camera_padding: repeat      # the single view fills all three camera slots
+      action_output_dim: 64
+      proprio_output_dim: 64
+      action_state_transforms:
+        - {_target_: agenticwam.datasets.lerobot.transforms.ego_unified_eef.EgoUnifiedEEFTransform, keys: [default]}
+      use_stepwise_action_norm: true
+      norm_default_mode: q01/q99
+      norm_exception_mode: null
+      action_state_merger:
+        _target_: agenticwam.datasets.lerobot.transforms.action_state_merger.ConcatLeftAlign
+      train_transforms: *image_transforms
+      val_transforms: *image_transforms
+
+train:
+  # DeadlineDataset: a slow read would stall its rank and idle every GPU behind it in the ZeRO
+  # all-reduce; on a timeout it retries another index, then falls back to the last good sample.
+  _target_: agenticwam.datasets.lerobot.deadline_dataset.DeadlineDataset
+  seconds: 60.0
+  max_retries: 2
+  dataset:
+    _target_: torch.utils.data.ConcatDataset
+    datasets:
+      - *yam_source               # YAML aliases: copies of the source nodes above
+      - *ego_source

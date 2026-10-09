@@ -1,0 +1,29 @@
+# @package _global_
+# RoboTwin hybrid: the 50-task suite on demonstrations collected by executing frozen programs with codegen/sim,
+# 14-D joint actions, trained on per-stage code slices so its generated code can drive the robot in the hybrid
+# evaluation (docs/ROBOTWIN.md sections 2, 3, 6). Geometry: 3 nodes x 8 GPUs x batch 4 = 96.
+#   train:     bash scripts/train_robotwin.sh robotwin_hybrid
+#   evaluate:  python robotwin/eval/benchmark.py --model robotwin_hybrid --ckpt <step.pt> [--mode hybrid]
+defaults:
+  - override /data: robotwin_cap
+  - override /model: agenticwam_cosmos
+  - _self_
+
+batch_size: 4
+num_workers: 10
+model:
+  action_dim: 14
+  proprio_dim: 14
+  code_canvas: 124                # FIXED training code canvas, EOS-filled (slices: p50 76, p99 117 tokens)
+  infer_code_tokens: 124          # = the training canvas
+lr_scheduler_type: cosine
+learning_rate: 2e-4
+weight_decay: 1e-2
+num_epochs: 1
+max_steps: 15000
+save_every: 2500
+log_every: 20
+eval_every: 999999
+gradient_accumulation_steps: 1
+resume: null
+foundation_ckpt: ${paths.robotwin_hybrid_init_ckpt}

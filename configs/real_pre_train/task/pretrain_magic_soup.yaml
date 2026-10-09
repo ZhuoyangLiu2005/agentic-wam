@@ -1,0 +1,29 @@
+# @package _global_
+# Pretraining: a YAM robot source + an ego (egocentric human-hand) source, unified 64-D, with code labels.
+# The model Its final checkpoint is the foundation of every post-training recipe. Data: configs/real_pre_train/data/.
+#   python scripts/launch_train.py --task pretrain_magic_soup data.yam_root=<dir> data.ego_root=<dir>
+# Multi-node and environment: docs/PRETRAINING.md sections 3-4 (PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,
+# HF_DATASETS_CACHE on persistent storage, AGENTICWAM_CFG_DROPOUT=0.15,0.0, HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1).
+# gradient_accumulation_steps sets the effective batch: 6 x 9 x world size.
+defaults:
+  - override /data: pretrain_magic_soup
+  - override /model: agenticwam_cosmos
+  - _self_
+
+batch_size: 6                     # 8 OOMs on long code samples
+num_workers: 8
+gradient_accumulation_steps: 9
+model:
+  infer_code_tokens: 64           # inference code canvas
+  load_pretrain: true             # from scratch: the video expert starts from a Cosmos-Predict2.5-2B video checkpoint
+  checkpoint_dir: ${paths.cosmos_ckpt}
+lr_scheduler_type: cosine
+learning_rate: 1e-4
+num_epochs: 1
+max_steps: null                   # one epoch
+save_every: 1000
+keep_last_ckpts: 1
+save_optimizer_state: true        # resumable (the optimizer state is ~90 GB per save)
+log_every: 20
+eval_every: 999999
+resume: null

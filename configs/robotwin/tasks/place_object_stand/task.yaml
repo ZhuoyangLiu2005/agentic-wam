@@ -1,0 +1,20 @@
+short: place_object_stand
+gen_tokens: 120
+nis: 50
+source:
+  frozen_program: codegen/sim/programs/place_object_stand/v3/frozen_program.py
+  version: v3
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: 166d8334518b2ea4efc7958c065717068fa17d8fb457662eea7982292e9f0e2a
+tokens:
+  preamble: 120
+  slices:
+  - 110
+  - 99
+  max_slice: 110
+stage2:
+  clean: 5/5
+  randomized: 3/3

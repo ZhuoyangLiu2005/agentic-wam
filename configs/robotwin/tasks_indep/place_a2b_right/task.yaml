@@ -1,0 +1,56 @@
+short: place_a2b_right
+gen_tokens: 88
+nis: 37
+source:
+  frozen_program: codegen/sim/programs_indep/place_a2b_right/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: ef517f477c898dc139a2c4ec8731e50100614f4b73e12874be272d27b2591ea8
+tokens:
+  preamble: 96
+  slices:
+  - 76
+  max_slice: 76
+scene:
+  comment: 'Fixed manipulands: every listed seed spawns the SAME objects, and each seed was PROBED in that very
+    scene -- every slot''s name ladder was asked of the perception tier there and at least one name landed on the
+    right actor. Grounding is a property of (object, scene), not of the object, so seeds are not interchangeable:
+    replacing a seed with an unprobed one of the same objects is not supported by any measurement. NOTE: re-running
+    import_tasks.py rewrites this file and drops this block -- re-run apply_scene_seeds.py after any re-import.'
+  models:
+    object: mouse
+    target_object: toycar
+  names:
+    object: mouse
+    target_object: toy car
+  name_ladders:
+    object:
+    - mouse
+    target_object:
+    - toy car
+  seed:
+    demo_clean: 146
+    demo_randomized: 901
+  usable_seeds:
+    demo_clean:
+    - 146
+    - 184
+    - 185
+    - 414
+    - 485
+    - 563
+    - 666
+    - 1336
+    demo_randomized:
+    - 901
+    - 952
+    - 964
+    - 1520
+    - 1521
+    - 2001
+  probe:
+    demo_clean: 8 usable of 8 probed
+    demo_randomized: 6 usable of 6 probed

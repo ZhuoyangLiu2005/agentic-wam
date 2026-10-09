@@ -1,0 +1,16 @@
+short: place_fan
+gen_tokens: 88
+nis: 37
+source:
+  frozen_program: codegen/sim/programs_indep/place_fan/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: 52d0c04338f2b41c7f368713001540ea63cd6dd5f841836050f41a998b36bf62
+tokens:
+  preamble: 111
+  slices:
+  - 80
+  max_slice: 80

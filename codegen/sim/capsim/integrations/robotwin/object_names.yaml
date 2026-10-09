@@ -1,0 +1,19 @@
+# Privileged-tier name overrides: task -> { name a program grounds with : task attribute of the actor it denotes }.
+#
+# The privileged backend resolves a name by whole-word token scoring against the scene's actor names
+# (e.g. "toy car" -> 057_toycar). An entry is needed only where that scoring cannot find the actor: the actor
+# name lacks the word the program uses (a colour, a role) or several actors tie. Every other name needs no entry.
+# Never map a noun that can name different objects in different episodes (random-object tasks) to a fixed
+# attribute: the table is consulted first, so it would silently redirect the noun to whatever occupies that slot.
+# Set CAPX_NAME_TABLE_AUDIT=1 to print, for every lookup, whether an entry differs from the generic answer.
+
+handover_block:
+  blue pad: target_box          # actor names carry no colour
+  red block: box
+
+place_shoe:
+  blue mat: target_block
+
+stack_blocks_two:
+  green block: block2           # two blocks tie on "block"; the colour is not in the actor name
+  red block: block1

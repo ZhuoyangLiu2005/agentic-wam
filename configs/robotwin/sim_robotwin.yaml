@@ -1,0 +1,43 @@
+# @package _global_
+# RoboTwin sim eval root (robotwin/eval/run_task.py). Composes the training defaults + a task config (default
+# robotwin_wam; pass task=<the checkpoint's training config>) via
+# the eval task, then runs RoboTwin's official script/eval_policy.py through the agenticwam_cosmos policy.
+
+defaults:
+  - /train
+  - override /task: robotwin_wam
+  - _self_
+
+ckpt: null
+gpu_id: 0
+
+EVALUATION:
+  # Shared RoboTwin sim checkout (SAPIEN + aloha-agilex cuRobo assets); agenticwam_cosmos has no own copy.
+  robotwin_root: ${paths.robotwin_root}
+  policy_name: agenticwam_policy   # name of the link to robotwin/deploy inside RoboTwin/policy/
+  task_name: null
+  task_config: demo_randomized
+  instruction_type: unseen
+  eval_num_episodes: 100
+  output_dir: ./evaluate_results/robotwin/${hydra:runtime.choices.task}/${now:%Y%m%d_%H%M%S}
+
+  # Action inference
+  action_horizon: null          # null -> num_frames-1 (=32)
+  replan_steps: 24
+  num_inference_steps: 20        # action flow-matching denoise steps
+  sigma_shift: null
+  rand_device: cpu
+  timing_enabled: false
+  eval_video_log: true
+  skip_get_obs_within_replan: true
+
+  # Runtime inputs
+  dataset_stats_path: null       # pass the training norm stats (dataset_stats_all.json) at launch
+  device: cuda
+
+hydra:
+  job:
+    chdir: false
+  run:
+    dir: .
+  output_subdir: null

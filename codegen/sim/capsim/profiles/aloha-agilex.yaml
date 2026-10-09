@@ -1,0 +1,49 @@
+# Embodiment profile: ALOHA-AgileX (RoboTwin's `aloha-agilex`) — every robot / scene / recording constant the
+# capsim code needs about this embodiment, in one place. Loaded by name (`capsim.profiles.load_profile("aloha-agilex")`);
+# the name is the `embodiment:` key configs/robotwin/*.yaml pass to RoboTwinTask. Porting to another robot = a new
+# file next to this one. Each value says where it came from; none of them is derived from anything else here.
+
+cameras:
+  primary: head_camera                   # RoboTwin head camera (task_config: head_camera_type); the perception anchor view + video source
+  front: front_camera                    # RoboTwin front scene camera; the instance-enumeration fallback view
+  aux: [front_camera, left_camera, right_camera]   # every other camera RoboTwin can enable; multi-view fusion order (keep the order)
+  wrist: {left: left_camera, right: right_camera}  # per-hand wrist cameras (task_config: wrist_camera_type)
+  lerobot_keys:                          # hdf5 camera group -> LeRobot video key, in the dataset's video-key order (official RoboTwin set)
+    head_camera: observation.images.cam_high
+    left_camera: observation.images.cam_left_wrist
+    right_camera: observation.images.cam_right_wrist
+
+tool:
+  tcp_offset: [-0.12, 0.0, 0.0]          # fingertip -> planner endpose frame, tool-local (approach = +x): -gripper_bias along x
+                                         #   (RoboTwin assets/embodiments/aloha-agilex/config.yml `gripper_bias: 0.12`)
+  fingertip_offset_m: 0.12               # endpose -> fingertip along the approach axis = the same gripper_bias (fallback when
+                                         #   get_<hand>_tcp_pose is unavailable, and the GraspNet grasp-frame -> fingertip push)
+  zapproach_to_tcp_wxyz: [0.7071067811865476, 0.0, -0.7071067811865476, 0.0]
+                                         # panda-convention grasp frame (approach +z, jaws close along y) -> RoboTwin endpose
+                                         #   frame (approach +x): -90 deg about y, i.e. [sqrt(.5), 0, -sqrt(.5), 0] (base.py)
+
+gripper:
+  aperture_air_raw: 0.18                 # raw gripper-joint fraction when the jaws close on nothing (measured in sim)
+  aperture_empty: 0.05                   # normalised opening below this right after close_gripper = closed on air
+
+table:
+  half_xy: [0.6, 0.35]                   # half extents of RoboTwin's table (envs/_base_task.py create_table length=1.2, width=0.7)
+
+robot:
+  base_dir: [0.0, -1.0, 0.0]             # world direction from the table centre toward the robot base (the base sits at -y)
+  arm_side_axis: x                       # world axis that separates the two arms' workspaces
+  right_arm_is_positive: true            # a point with x >= 0 is on the right arm's side (the `pos[0] >= 0 -> right` rule)
+
+recording:
+  fps: 50                                # LeRobot dataset frame rate (official RoboTwin converter: fps=50)
+  frame_hw: [480, 640]                   # exported video size (the official set is 480x640, Large_D435 of _camera_config.yml;
+                                         #   the saver's own frames are D435 240x320 and are upscaled)
+  vcodec: libsvtav1                      # av1 like the official dataset
+  vcodec_fallback: h264                  # when the av1 encoder is missing
+  save_freq: 15                          # substeps between saver frames (RoboTwin task_config/demo_*.yml `save_freq: 15`)
+  depth_unit: mm                         # RoboTwin camera depth maps are millimetres (capsim converts to metres)
+  state_dim: 14                          # joint_action/vector: 6 joints + 1 gripper per arm, left then right
+  joint_names: [left_waist, left_shoulder, left_elbow, left_forearm_roll, left_wrist_angle, left_wrist_rotate, left_gripper,
+                right_waist, right_shoulder, right_elbow, right_forearm_roll, right_wrist_angle, right_wrist_rotate, right_gripper]
+                                         # LeRobot feature names (lerobot_info_template.json, the official aloha set)
+  robot_type: aloha                      # LeRobot info.json robot_type (lerobot_info_template.json)

@@ -1,0 +1,28 @@
+# Where AgenticWAM finds weights and data. Every config refers to these keys as ${paths.<key>}.
+# Set them once for your machine, in one of three ways (docs/INSTALL.md section 3):
+#   * edit this file;
+#   * copy it to configs/paths/<name>.yaml and add `paths=<name>` to every command;
+#   * override single keys on the command line: paths.pretrain_ckpt=/data/agenticwam_pretrain.pt
+# Only the keys a run uses must exist (e.g. real-robot post-training needs wan_vae, code_model, code_vision
+# and pretrain_ckpt; text_encoder is needed to embed new instructions).
+
+# ---- model weights ---------------------------------------------------------------------------------
+wan_vae: /path/to/Wan2.2_VAE.pth                  # frozen video VAE (Hugging Face Wan-AI/Wan2.2-TI2V-5B, file Wan2.2_VAE.pth)
+text_encoder: /path/to/Cosmos-Reason1-7B         # instruction encoder (Hugging Face nvidia/Cosmos-Reason1-7B)
+code_model: /path/to/SDAR-1.7B-Chat               # code-expert language body (Hugging Face JetLM/SDAR-1.7B-Chat)
+code_vision: /path/to/Qwen3-VL-2B-Instruct        # frozen vision tower of the code expert (Hugging Face Qwen/Qwen3-VL-2B-Instruct)
+
+# ---- checkpoints a training run starts from --------------------------------------------------------
+pretrain_ckpt: /path/to/agenticwam_pretrain.pt    # the released AgenticWAM pretrained checkpoint (README): foundation of post-training
+robotwin_wam_init_ckpt: /path/to/robotwin_wam_init.pt          # starting weights of task=robotwin_wam
+robotwin_hybrid_init_ckpt: /path/to/robotwin_hybrid_init.pt    # starting weights of task=robotwin_hybrid
+
+# ---- pretraining from scratch only ----------------------------------------------------------------
+cosmos_ckpt: /path/to/cosmos_video_checkpoint    # a Cosmos-Predict2.5-2B video checkpoint (model-*-of-*.safetensors; not distributed)
+
+# ---- RoboTwin ----------------------------------------------------------------------------------------
+robotwin_root: /path/to/RoboTwin                  # RoboTwin 2.0 checkout: simulator, assets, eval scripts
+robotwin_official: /path/to/robotwin2.0           # official demonstrations: robotwin2.0/ (LeRobot) + dataset_stats.json
+robotwin_official_labels: /path/to/robotwin2.0_labels   # code labels, prompts and text embeddings of the official data
+robotwin_cap: /path/to/robotwin_cap               # codegen/sim-collected data: <task>/lerobot/robotwin2.0, _text_cache/<task>
+robotwin_cap_slices: /path/to/robotwin_cap_slices # per-task stage slices of that data: <task>/raw/slices/

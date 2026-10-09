@@ -1,0 +1,16 @@
+short: brgb
+gen_tokens: 88
+nis: 37
+source:
+  frozen_program: codegen/sim/programs_indep/blocks_ranking_rgb/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: d51202ea21c9eb4151c313f0c8b9f9273bdbe74b6e04c66ccbe546793b91bdaa
+tokens:
+  preamble: 44
+  slices:
+  - 74
+  max_slice: 74

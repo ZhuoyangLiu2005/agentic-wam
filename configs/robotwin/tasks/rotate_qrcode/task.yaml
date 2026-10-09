@@ -1,0 +1,21 @@
+short: rotate_qrcode
+gen_tokens: 88
+nis: 37
+source:
+  frozen_program: codegen/sim/programs/rotate_qrcode/v2/frozen_program.py
+  version: v2
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 3
+  executed_sha256: 8017dccf81230afcde6ac6701748a50d6b1de34dcec08dcab134c52ede068c3a
+tokens:
+  preamble: 116
+  slices:
+  - 45
+  - 72
+  - 77
+  max_slice: 77
+stage2:
+  clean: 5/5
+  randomized: 3/3

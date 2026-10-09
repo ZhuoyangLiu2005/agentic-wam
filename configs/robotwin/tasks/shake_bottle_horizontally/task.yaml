@@ -1,0 +1,20 @@
+short: shake_bottle_horizontally
+gen_tokens: 120
+nis: 50
+source:
+  frozen_program: codegen/sim/programs/shake_bottle_horizontally/v2/frozen_program.py
+  version: v2
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: 0741c488bd086a49589e342ecb77029ba437fd6bca55958ecfaf4c270f584631
+tokens:
+  preamble: 105
+  slices:
+  - 108
+  - 109
+  max_slice: 109
+stage2:
+  clean: 4/5
+  randomized: 3/3

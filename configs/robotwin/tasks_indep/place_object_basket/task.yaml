@@ -1,0 +1,139 @@
+short: place_object_basket
+gen_tokens: 88
+nis: 37
+source:
+  frozen_program: codegen/sim/programs_indep/place_object_basket/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 2
+  executed_sha256: cfa62f9460cd27f5a39756d11285d818898a0e687f9cbafb1bea6af90d302f46
+tokens:
+  preamble: 149
+  slices:
+  - 75
+  - 65
+  max_slice: 75
+scene:
+  comment: 'Fixed manipulands: every listed seed spawns the SAME objects, and each seed was PROBED in that very
+    scene -- every slot''s name ladder was asked of the perception tier there and at least one name landed on the
+    right actor. Grounding is a property of (object, scene), not of the object, so seeds are not interchangeable:
+    replacing a seed with an unprobed one of the same objects is not supported by any measurement. NOTE: re-running
+    import_tasks.py rewrites this file and drops this block -- re-run apply_scene_seeds.py after any re-import.'
+  models:
+    basket: basket
+    object: playingcards
+  names:
+    basket: basket
+    object: playing cards
+  name_ladders:
+    basket:
+    - basket
+    object:
+    - playing cards
+    - cards
+  seed:
+    demo_clean: 108
+    demo_randomized: 157
+  usable_seeds:
+    demo_clean:
+    - 108
+    - 110
+    - 124
+    - 127
+    - 128
+    - 140
+    - 141
+    - 142
+    - 144
+    - 146
+    - 147
+    - 149
+    - 154
+    - 155
+    - 156
+    - 161
+    - 163
+    - 165
+    - 166
+    - 168
+    - 169
+    - 171
+    - 175
+    - 176
+    - 179
+    - 182
+    - 187
+    - 188
+    - 192
+    - 193
+    - 198
+    - 211
+    - 212
+    - 213
+    - 216
+    - 218
+    - 219
+    - 220
+    - 222
+    - 225
+    - 230
+    - 231
+    - 234
+    - 235
+    - 239
+    - 241
+    demo_randomized:
+    - 157
+    - 158
+    - 159
+    - 173
+    - 174
+    - 175
+    - 178
+    - 184
+    - 185
+    - 186
+    - 187
+    - 188
+    - 189
+    - 190
+    - 191
+    - 193
+    - 194
+    - 196
+    - 199
+    - 200
+    - 201
+    - 202
+    - 206
+    - 208
+    - 209
+    - 211
+    - 212
+    - 215
+    - 219
+    - 220
+    - 223
+    - 224
+    - 225
+    - 226
+    - 227
+    - 228
+    - 229
+    - 230
+    - 231
+    - 232
+    - 233
+    - 239
+    - 244
+    - 245
+    - 246
+    - 247
+    - 261
+    - 267
+    - 268
+  probe:
+    demo_clean: 46 usable of 49 probed
+    demo_randomized: 49 usable of 49 probed

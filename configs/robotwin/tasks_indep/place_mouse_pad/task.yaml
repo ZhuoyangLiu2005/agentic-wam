@@ -1,0 +1,16 @@
+short: place_mouse_pad
+gen_tokens: 112
+nis: 47
+source:
+  frozen_program: codegen/sim/programs_indep/place_mouse_pad/frozen_program.py
+  version: base
+  preamble: 'preamble.txt (slicing.py preamble form: stage-called helper stubs + setup names)'
+stage_contract:
+  annotated: true
+  stages: 1
+  executed_sha256: 02a3108f2a1b6f0a77136e76042a72402514dbf8f4270027d55a2ad69010a288
+tokens:
+  preamble: 107
+  slices:
+  - 99
+  max_slice: 99
