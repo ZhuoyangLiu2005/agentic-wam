@@ -70,7 +70,7 @@ expert** — `model.use_code_expert=false` builds the same model with the video 
 
 | Checkpoint | Stage | Notes |
 |---|---|---|
-| [`miniFranka/agentic-wam-pretrain-yamego3k-soup-e1`](https://huggingface.co/miniFranka/agentic-wam-pretrain-yamego3k-soup-e1) | Pretrain | Robot (`yam`) + egocentric human (`ego`) mixture, 1 epoch (115,213 steps). **Start here to post-train on your own task** (`paths.pretrain_ckpt`). |
+| [`miniFranka/agentic-wam-pretrain-yamego3k-soup-e1`](https://huggingface.co/miniFranka/agentic-wam-pretrain-yamego3k-soup-e1) | Pretrain | Robot (`yam`) + egocentric human (`ego`) mixture, 1 epoch. **Start here to post-train on your own task** (`paths.pretrain_ckpt`). |
 
 The checkpoint holds every trained weight. The frozen public components load from their own releases: the Wan2.2
 VAE ([`Wan-AI/Wan2.2-TI2V-5B`](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B)), the instruction encoder
