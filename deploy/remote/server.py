@@ -56,6 +56,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt", required=True, help="trained step_XXXXXX.pt (nonexistent path -> smoke mode)")
     ap.add_argument("--task", default="posttrain_yam", help="the training task config (configs/real_post_train/task/)")
+    ap.add_argument("--embodiment", default="yam", choices=["yam", "sharpa"],
+                    help="which robot/bridge to serve (default: yam). Turns on the Sharpa camera "
+                         "crop + vega_eef64 FK/IK bridge only when set to 'sharpa' -- never "
+                         "inferred from --task (docs/REALWORLD.md §4.8)")
     ap.add_argument("--dataset", default=None, help="the dataset directory the checkpoint was post-trained on (its stats + processing)")
     ap.add_argument("--override", action="append", default=[], help="extra hydra override, e.g. model.infer_code_tokens=192 (repeatable)")
     ap.add_argument("--dataset-stats", default=None, help="default: cfg.data.train.pretrained_norm_stats")
@@ -92,7 +96,7 @@ def main():
     rt = PolicyRuntime(ckpt=a.ckpt, task=a.task, dataset=a.dataset, overrides=a.override, dataset_stats=a.dataset_stats,
                        action_horizon=a.action_horizon, replan_steps=a.replan_steps,
                        num_inference_steps=a.num_inference_steps, device=a.device,
-                       video_log_dir=a.video_log_dir)
+                       video_log_dir=a.video_log_dir, embodiment=a.embodiment)
 
     if rt.smoke_mode:
         log.warning("SMOKE MODE: checkpoint missing, actions are meaningless. Do NOT drive a robot.")
@@ -222,9 +226,10 @@ def main():
 
     srv = ThreadingHTTPServer((a.host, a.port), H)
     srv.timeout = a.socket_timeout
-    log.info("READY | task=%s code_expert=%s dtype=%s | horizon=%d replan=%d nis=%d | auth=%s",
-             rt.task, rt.use_code, rt.model_dtype, rt.action_horizon, rt.replan_steps,
-             rt.num_inference_steps, bool(token))
+    log.info("READY | task=%s embodiment=%s action_dim=%d code_expert=%s dtype=%s | "
+             "horizon=%d replan=%d nis=%d | auth=%s",
+             rt.task, rt.embodiment, rt.action_dim, rt.use_code, rt.model_dtype, rt.action_horizon,
+             rt.replan_steps, rt.num_inference_steps, bool(token))
     log.info("listening on http://%s:%d  (POST /act /reset, GET /health /ping)", a.host, a.port)
     try:
         srv.serve_forever()

@@ -35,6 +35,32 @@ AGENTICWAM = str(Path(__file__).resolve().parents[2])
 
 logger = logging.getLogger(__name__)
 
+# Activation is an explicit --embodiment flag, never inferred from the composed task's
+# action_state_transforms -- see docs/REALWORLD.md §4.8. "yam" is the default and reproduces
+# today's behavior byte-for-byte; "sharpa" turns on the vega_eef64 bridge + Sharpa camera crop.
+_EMBODIMENTS = {
+    "yam":    {"transform_suffix": "YamUnifiedEEFTransform",
+               "bridge": "yam_eef64", "state_to_raw_attr": "state14_to_82",
+               "client_action_dim": 14, "action_space_label": "yam_eef64", "image_preproc": None},
+    "sharpa": {"transform_suffix": "TianjiSharpaUnifiedEEFTransform",
+               "bridge": "vega_eef64", "state_to_raw_attr": "state58_to_raw76",
+               "client_action_dim": 58, "action_space_label": "vega_eef64", "image_preproc": "sharpa"},
+}
+
+
+def _sharpa_image_preproc(images: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    """Apply the Sharpa training-time per-camera crop (deploy/common/sharpa_obs.py) before the
+    frame reaches AgenticWAMCosmosRobotWinPolicy's generic resize+center-crop, which then runs
+    as a no-op on the already-320x224 result."""
+    from . import sharpa_obs
+    out = dict(images)
+    if "head_camera" in out:
+        out["head_camera"] = sharpa_obs.head_camera_view(out["head_camera"])
+    for key in ("left_camera", "right_camera"):
+        if key in out:
+            out[key] = sharpa_obs.wrist_camera_view(out[key])
+    return out
+
 
 class PolicyRuntime:
     """Owns the model. Thread-safe: one GPU, so inference is serialized under a lock."""
@@ -43,7 +69,11 @@ class PolicyRuntime:
                  dataset_stats: Optional[str] = None,
                  action_horizon: Optional[int] = None, replan_steps: int = 24,
                  num_inference_steps: int = 10, device: str = "cuda",
-                 video_log_dir: Optional[str] = None, text_max_len: int = 128):
+                 video_log_dir: Optional[str] = None, text_max_len: int = 128,
+                 embodiment: str = "yam"):
+        if embodiment not in _EMBODIMENTS:
+            raise ValueError(f"--embodiment {embodiment!r} not in {sorted(_EMBODIMENTS)}")
+        self.embodiment = embodiment
         sys.path.insert(0, AGENTICWAM + "/src")
         sys.path.insert(0, AGENTICWAM + "/robotwin/deploy")
         os.environ.setdefault("DIFFSYNTH_DOWNLOAD_SOURCE", "huggingface")
@@ -71,23 +101,36 @@ class PolicyRuntime:
         self.num_video_frames = (nf - 1) // fr + 1
         self.n_cameras = int(cfg.model.get("n_cameras", 3))
         self.model_action_dim = int(cfg.model.get("action_dim", 14))
-        # 64-D unified-EEF checkpoints are served as 14-D joints: FK on the way
-        # in, IK on the way out (yam_eef64). The client-facing action_dim is
-        # therefore 14 in that mode -- deploy/robot/agenticwam_client.py refuses
-        # anything else, and the request's state is validated against it.
+        # 64-D unified-EEF checkpoints are served as raw joints: FK on the way in, IK on the way
+        # out (yam_eef64 / vega_eef64, picked by --embodiment, never inferred from the task
+        # config). The client-facing action_dim is therefore the embodiment's raw joint/hand dim
+        # in that mode -- deploy/robot/agenticwam_client.py refuses anything else for YAM, and the
+        # request's state is validated against it either way.
         self.unified_eef = self.model_action_dim == 64
+        spec = _EMBODIMENTS[self.embodiment]
         if self.unified_eef:
             transforms = [str(t.get("_target_", "")) for t in
                           cfg.data.train.processor.get("action_state_transforms", None) or []]
-            if not any(t.endswith("YamUnifiedEEFTransform") for t in transforms):
+            if not any(t.endswith(spec["transform_suffix"]) for t in transforms):
                 raise NotImplementedError(
-                    f"task {task!r} uses {transforms}: the 64-D <-> joint bridge (yam_eef64) is YAM's "
-                    "kinematics only, so this checkpoint cannot be served (docs/REALWORLD.md §4.8)")
-            from . import yam_eef64
-            self._eef64 = yam_eef64
-            self.action_dim = 14
+                    f"--embodiment {self.embodiment!r} requires {spec['transform_suffix']}, but task "
+                    f"{task!r} uses {transforms} -- wrong --embodiment for this checkpoint, or the "
+                    "bridge for this transform isn't implemented yet (docs/REALWORLD.md §4.8)")
+            import importlib
+            self._eef64 = importlib.import_module(f".{spec['bridge']}", package=__package__)
+            self._state_to_raw = getattr(self._eef64, spec["state_to_raw_attr"])
+            self.action_dim = spec["client_action_dim"]
+            self._image_preproc = _sharpa_image_preproc if spec["image_preproc"] == "sharpa" else None
+            self._action_space_label = spec["action_space_label"]
         else:
+            if self.embodiment != "yam":
+                raise NotImplementedError(
+                    f"--embodiment {self.embodiment!r} expects a 64-D unified-EEF checkpoint, but "
+                    f"this task's model.action_dim={self.model_action_dim} -- pass --embodiment yam "
+                    "(the default) for a raw joint-space checkpoint")
             self.action_dim = self.model_action_dim
+            self._image_preproc = None
+            self._action_space_label = "joint"
         self.ik_failures = 0
         self.n_rtc_guided = 0
         self._episode_code_ids = None   # AGENTICWAM_CODE_PIN: step-0 program, frozen per episode
@@ -187,9 +230,12 @@ class PolicyRuntime:
         """Convert committed 14-D joint rows into normalized 64-D targets +
         weights and stage them on the model for the fast-joint denoise loop
         (inference-only RTC: hard-freeze the delay prefix, soft-mask the rest).
-        Returns True if staged. No-ops unless unified_eef + AGENTICWAM_FAST_JOINT."""
+        Returns True if staged. No-ops unless unified_eef + AGENTICWAM_FAST_JOINT + embodiment
+        "yam" -- the joints_to_delta64 math below is YAM-kinematics-specific; Sharpa has no RTC
+        support yet."""
         import torch
-        if not (self.unified_eef and self.fast_joint) or os.environ.get("AGENTICWAM_RTC") == "0":
+        if (not (self.unified_eef and self.fast_joint and self.embodiment == "yam")
+                or os.environ.get("AGENTICWAM_RTC") == "0"):
             return False
         cj = np.asarray(committed, dtype=np.float64)
         if cj.ndim != 2 or cj.shape[1] != 14 or len(cj) == 0:
@@ -221,12 +267,14 @@ class PolicyRuntime:
         """{camera: HxWx3 uint8}, raw joint state -> (ABSOLUTE qpos chunk [T,D], code, infer_ms).
 
         The model predicts deltas; we resolve them against the caller's state here, which is why
-        the response is safe to command directly as joint targets. Joint-space checkpoints
+        the response is safe to command directly as joint/hand targets. Joint-space checkpoints
         (RelativeJointTransform) add the state back; unified-EEF checkpoints go through FK/IK
-        (yam_eef64), so the client sees 14-D absolute joints either way.
+        (yam_eef64 / vega_eef64, per --embodiment), so the client sees absolute joints either way.
         """
         state = np.asarray(state, dtype=np.float64).reshape(-1)
-        model_state = self._eef64.state14_to_82(state) if self.unified_eef else state
+        model_state = self._state_to_raw(state) if self.unified_eef else state
+        if self._image_preproc is not None:
+            images = self._image_preproc(images)
         observation = {
             "observation": {cam: {"rgb": images[cam]} for cam in images},
             "joint_action": {"vector": model_state.tolist()},
@@ -274,9 +322,13 @@ class PolicyRuntime:
             code = self._last_code
         return chunk, code, infer_ms
 
-    def warmup(self, height: int = 480, width: int = 640) -> float:
+    def warmup(self, height: Optional[int] = None, width: int = 640) -> float:
         """Burn the first-call CUDA cost on synthetic input. Returns seconds spent."""
         from .contract import CAMERAS
+        if height is None:
+            # raw camera height differs by embodiment: YAM's rig is 640x480 (4:3), vega's is
+            # 360x640 -- sharpa_obs.head_camera_view/wrist_camera_view assert on this exactly.
+            height = 360 if self.embodiment == "sharpa" else 480
         blank = np.zeros((height, width, 3), np.uint8)
         t0 = time.perf_counter()
         try:
@@ -300,9 +352,10 @@ class PolicyRuntime:
 
     def info(self) -> Dict[str, Any]:
         return {"task": self.task, "ckpt": self.ckpt, "smoke_mode": self.smoke_mode,
+                "embodiment": self.embodiment,
                 "code_expert": self.use_code, "action_dim": self.action_dim,
                 "model_action_dim": self.model_action_dim,
-                "action_space": "eef64" if self.unified_eef else "joint",
+                "action_space": self._action_space_label,
                 "ik_failures": self.ik_failures,
                 "torch_compile": self.compile_mode or "off",
                 "fast_joint": self.fast_joint,

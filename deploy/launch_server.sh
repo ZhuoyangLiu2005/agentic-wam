@@ -5,8 +5,10 @@
 #
 # DATASET is the dataset directory the checkpoint was post-trained on: it supplies the normalisation stats, so it must
 # match training. INFER_CODE_TOKENS (default 64) must match the training run's model.infer_code_tokens.
-# Optional env: TASK (default posttrain_yam), GPU (0), PORT (8712), NIS (6 denoising steps), REPLAN (24),
-# PYTHON (the agenticwam env's python), HF_HOME. Copy the token to /tmp/agenticwam_token.txt on the station.
+# Optional env: TASK (default posttrain_yam), EMBODIMENT (yam|sharpa, default yam -- only "sharpa" turns on
+# the vega_eef64 bridge + Sharpa camera crop; never inferred from TASK, see docs/REALWORLD.md §4.8), GPU (0),
+# PORT (8712), NIS (6 denoising steps), REPLAN (24), PYTHON (the agenticwam env's python), HF_HOME.
+# Copy the token to /tmp/agenticwam_token.txt on the station.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -22,5 +24,6 @@ export AGENTICWAM_CODE_PIN="${AGENTICWAM_CODE_PIN-1}"                 # keep the
 export AGENTICWAM_NOISE_SEED="${AGENTICWAM_NOISE_SEED-1234}"
 export TORCHINDUCTOR_CACHE_DIR="$ROOT/.torchinductor_cache_deploy"
 CUDA_VISIBLE_DEVICES="${GPU:-0}" exec "${PYTHON:-python}" deploy/remote/server.py \
-  --ckpt "$CKPT" --task "${TASK:-posttrain_yam}" --dataset "$DATASET" --override "model.infer_code_tokens=${INFER_CODE_TOKENS:-64}" --instruction "$INSTR" \
+  --ckpt "$CKPT" --task "${TASK:-posttrain_yam}" --embodiment "${EMBODIMENT:-yam}" --dataset "$DATASET" \
+  --override "model.infer_code_tokens=${INFER_CODE_TOKENS:-64}" --instruction "$INSTR" \
   --num-inference-steps "${NIS:-6}" --replan-steps "${REPLAN:-24}" --port "${PORT:-8712}" "$@"
