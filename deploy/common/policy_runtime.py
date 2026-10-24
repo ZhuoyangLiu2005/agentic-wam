@@ -122,6 +122,17 @@ class PolicyRuntime:
             self.action_dim = spec["client_action_dim"]
             self._image_preproc = _sharpa_image_preproc if spec["image_preproc"] == "sharpa" else None
             self._action_space_label = spec["action_space_label"]
+            self._resolution_guard = None
+            if spec["image_preproc"] == "sharpa":
+                # sharpa_obs already emits the exact training 224x320 frame; parity_crop would crop it
+                # AGAIN in deploy_policy._build_obs_video (legacy/parity are exact no-ops on it).
+                preproc = os.environ.get("AGENTICWAM_EVAL_PREPROC", "").strip().lower() or "parity"
+                if preproc == "parity_crop":
+                    raise NotImplementedError(
+                        "AGENTICWAM_EVAL_PREPROC=parity_crop re-crops the Sharpa frame after "
+                        "sharpa_obs; unset it (or use parity/legacy) with --embodiment sharpa")
+                from . import resolution_guard
+                self._resolution_guard = resolution_guard.sharpa_guard()
         else:
             if self.embodiment != "yam":
                 raise NotImplementedError(
@@ -131,6 +142,7 @@ class PolicyRuntime:
             self.action_dim = self.model_action_dim
             self._image_preproc = None
             self._action_space_label = "joint"
+            self._resolution_guard = None
         self.ik_failures = 0
         self.n_rtc_guided = 0
         self._episode_code_ids = None   # AGENTICWAM_CODE_PIN: step-0 program, frozen per episode
@@ -272,6 +284,8 @@ class PolicyRuntime:
         (yam_eef64 / vega_eef64, per --embodiment), so the client sees absolute joints either way.
         """
         state = np.asarray(state, dtype=np.float64).reshape(-1)
+        if self._resolution_guard is not None:
+            self._resolution_guard.check(images)          # ContractError -> HTTP 400, before any pixels move
         model_state = self._state_to_raw(state) if self.unified_eef else state
         if self._image_preproc is not None:
             images = self._image_preproc(images)
@@ -338,6 +352,8 @@ class PolicyRuntime:
                 self.policy.step_count = 0
                 self.n_infer = 0
                 self._episode_code_ids = None     # nor pin its (garbage-input) program
+                if self._resolution_guard is not None:
+                    self._resolution_guard.reset()  # nor report its synthetic frame as "seen"
         self.warmed_up = True
         return time.perf_counter() - t0
 
@@ -351,7 +367,9 @@ class PolicyRuntime:
         return int(self.policy.episode_count)
 
     def info(self) -> Dict[str, Any]:
-        return {"task": self.task, "ckpt": self.ckpt, "smoke_mode": self.smoke_mode,
+        extra = ({"camera_resolution": self._resolution_guard.info()}
+                 if self._resolution_guard is not None else {})
+        return {**extra, "task": self.task, "ckpt": self.ckpt, "smoke_mode": self.smoke_mode,
                 "embodiment": self.embodiment,
                 "code_expert": self.use_code, "action_dim": self.action_dim,
                 "model_action_dim": self.model_action_dim,

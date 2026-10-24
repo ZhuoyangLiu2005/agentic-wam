@@ -28,6 +28,10 @@ URDF = _HERE / "urdf" / "vega_1.urdf"
 
 TORSO = (0.9, 1.57, 0.1)   # fixed torso pose used throughout data conversion (CHOICES.md)
 HEAD = (0.28, 0.0, 0.0)
+# IK posture-regularization target = the teleop home pose (T-Rex hardware_code/config/default.yaml),
+# not zeros: the arms are 7-DOF redundant, so this target picks the null-space solution.
+LEFT_ARM_HOME = (0.84, 0.51, 0.37, -1.30, -0.65, -0.29, -0.03)
+RIGHT_ARM_HOME = (-0.84, -0.51, -0.37, -1.30, 0.65, 0.29, 0.03)
 ARM_JOINT_SUFFIXES = [f"arm_j{i}" for i in range(1, 8)]   # arm_j1..arm_j7 (7 DOF; j8 unused, as upstream)
 EE_FRAMES = ("L_ee", "R_ee")
 
@@ -86,7 +90,7 @@ class _ReducedArms:
         self.left_idx = np.array([_joint_index(self.model, f"L_{s}") for s in ARM_JOINT_SUFFIXES])
         self.right_idx = np.array([_joint_index(self.model, f"R_{s}") for s in ARM_JOINT_SUFFIXES])
         assert self.model.nq == self.model.nv == 2 * len(ARM_JOINT_SUFFIXES)
-        self.default_qpos = np.zeros(self.model.nq)
+        self.default_qpos = self.assemble(LEFT_ARM_HOME, RIGHT_ARM_HOME)
 
     def assemble(self, qL7, qR7):
         qpos = np.zeros(self.model.nq)
