@@ -49,6 +49,36 @@ AgenticWamServerError = base.AgenticWamServerError
 AgenticWamClientConfig = base.AgenticWamClientConfig
 
 
+def print_code(replan: int, code: str | None, previous: str | None) -> None:
+    """Print one replan's generated program. With AGENTICWAM_CODE_PIN (the launch_server.sh
+    default) the server keeps the step-0 program for the whole episode, so repeats are one line."""
+    if not code:
+        print(f"[replan {replan}] no code (2-expert checkpoint, or the code expert returned nothing)", flush=True)
+    elif code == previous:
+        print(f"[replan {replan}] code unchanged ({len(code)} chars)", flush=True)
+    else:
+        print(f"[replan {replan}] POLICY_CODE:\n{code}\n[/POLICY_CODE]", flush=True)
+
+
+def check_server_resolution_guard(client: "SharpaPolicyClient", obs: dict, instruction: str) -> str:
+    """Camera image size check on the server: send a 320x224 head frame on purpose; the server's
+    resolution guard must reject it with HTTP 400 (nothing is inferred). Returns the server's message."""
+    import cv2
+
+    small = cv2.resize(obs["images"]["head_camera"], (320, 224), interpolation=cv2.INTER_AREA)
+    images = {cam: {"format": "png", "data": base._encode_image(f, "png", 0)}
+              for cam, f in {**obs["images"], "head_camera": small}.items()}
+    payload = {"protocol": base.PROTOCOL_VERSION, "instruction": instruction, "images": images,
+               "state": [float(x) for x in obs["state"]], "seq": -1, "obs_stamp_ns": 0}
+    try:
+        client._request("POST", "/act", payload)
+    except AgenticWamServerError as exc:
+        if "HTTP 400" in str(exc):
+            return str(exc)
+        raise
+    raise AgenticWamServerError("server ACCEPTED a 320x224 head frame: its resolution guard is not active")
+
+
 def split_action_matrix(matrix: np.ndarray) -> dict[str, np.ndarray]:
     """(H, 58) -> {left_arm (H,7), left_hand (H,22), right_arm (H,7), right_hand (H,22)}."""
     return {k: matrix[..., s] for k, s in SLICES.items()}

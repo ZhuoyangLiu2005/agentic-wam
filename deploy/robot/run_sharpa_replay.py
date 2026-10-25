@@ -131,25 +131,6 @@ def group_error(pred: np.ndarray, ref: np.ndarray) -> dict[str, dict[str, float]
     return out
 
 
-def guard_test(client: sharpa_client.SharpaPolicyClient, obs: dict, instruction: str) -> None:
-    """Send a pre-resized head frame on purpose; the server must reject it with HTTP 400."""
-    import cv2
-
-    small = cv2.resize(obs["images"]["head_camera"], (320, 224), interpolation=cv2.INTER_AREA)
-    images = {cam: {"format": "png", "data": sharpa_client.base._encode_image(f, "png", 0)}
-              for cam, f in {**obs["images"], "head_camera": small}.items()}
-    payload = {"protocol": sharpa_client.base.PROTOCOL_VERSION, "instruction": instruction,
-               "images": images, "state": [float(x) for x in obs["state"]], "seq": -1, "obs_stamp_ns": 0}
-    try:
-        client._request("POST", "/act", payload)
-    except sharpa_client.AgenticWamServerError as exc:
-        if "HTTP 400" in str(exc):
-            print(f"guard test OK: server rejected a 320x224 head frame ({exc})")
-            return
-        raise
-    raise SystemExit("guard test FAILED: server accepted a pre-resized frame")
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dataset", type=Path, default=DEFAULT_DATASET, help="T-Rex LeRobot v3.0 root")
@@ -172,7 +153,7 @@ def main() -> int:
     client = sharpa_client.SharpaPolicyClient(sharpa_client.AgenticWamClientConfig(
         host=a.host, port=a.port, token=token, instruction=instruction, image_format=a.image_format))
 
-    records, t, prev_tail = [], 0, None
+    records, t, prev_tail, prev_code = [], 0, None, None
     try:
         health = client.connect()
         client.reset(task=instruction)
@@ -183,7 +164,8 @@ def main() -> int:
                 break
             obs = episode.get_observation(t)
             if a.guard_test and not records:
-                guard_test(client, obs, instruction)
+                msg = sharpa_client.check_server_resolution_guard(client, obs, instruction)
+                print(f"guard test OK: server rejected a 320x224 head frame ({msg})")
             chunk, info = client.infer(obs, task=instruction)
             rows = min(info["replan_steps"], len(chunk), episode.length - t)
 
@@ -198,7 +180,7 @@ def main() -> int:
                 "row0_vs_state": group_error(chunk[0], obs["state"]),
                 # jump from the previous chunk's last executed row to this chunk's row 0
                 "seam_jump": None if prev_tail is None else group_error(chunk[0], prev_tail),
-                "code_bytes": len(info["code"] or ""),
+                "code": info["code"],
             }
             records.append(rec)
             err = rec["action_error"]
@@ -206,7 +188,8 @@ def main() -> int:
                   f"(model {rec['server_infer_ms']:5.0f}) | err mean L/R arm "
                   f"{err['left_arm']['mean']:.3f}/{err['right_arm']['mean']:.3f} "
                   f"hand {err['left_hand']['mean']:.3f}/{err['right_hand']['mean']:.3f}")
-            prev_tail = chunk[rows - 1]
+            sharpa_client.print_code(rec["replan"], info["code"], prev_code)
+            prev_tail, prev_code = chunk[rows - 1], info["code"]
             t += rows
     finally:
         client.close()
