@@ -6,8 +6,9 @@ T-Rex checkout: FK is `VegaFK` (T-Rex/utils/unpack_lerobot_to_raw_fk.py), IK is 
 .../teleop/robot_descriptions.py). Only the 7-DOF-per-arm kinematics are vendored -- hand joints
 need no FK/IK (see deploy/common/vega_eef64.py), so no hand URDF/geometry is needed here.
 
-Needs `pin` (pinocchio) and `pink` installed in the deploy venv -- same ad hoc-dependency
-situation as `mujoco` for utils/yam_fk_ik/yam_kinematics.py. Neither `coal`/`fcl` nor
+Needs `pin>=3.2` (pinocchio), `pin-pink`, `qpsolvers` and `daqp` (the solver="daqp" backend) installed in
+the deploy venv, as in T-Rex hardware_code/requirements.txt -- same ad hoc-dependency situation as
+`mujoco` for utils/yam_fk_ik/yam_kinematics.py. Neither `coal`/`fcl` nor
 `dexmate-urdf` are required: IK here never builds a GeometryModel (collision avoidance is
 commented out in the upstream `PinkLocalIK.solve_ik` too), so only the kinematic tree -- the
 ~30KB `urdf/vega_1.urdf` text file vendored alongside this module (Apache-2.0, see
