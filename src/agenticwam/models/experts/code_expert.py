@@ -659,10 +659,28 @@ def _build_sdar_code_expert(
     so map model.layers -> MoT CodeBlocks exactly as the Qwen builder, keep SDAR's embed/lm_head/
     norm + its native <|MASK|> token, and set code_objective='blockdiff'. Vision reaches the code
     via MoT joint attention (code->video), so no vision encoder is needed here."""
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-    logger.info("Loading SDAR code-expert backbone %s ...", model_name)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name, trust_remote_code=True, torch_dtype=torch_dtype, attn_implementation="sdpa")
+    # from transformers import AutoModelForCausalLM, AutoTokenizer
+    # logger.info("Loading SDAR code-expert backbone %s ...", model_name)
+    # model = AutoModelForCausalLM.from_pretrained(
+    #     model_name, trust_remote_code=True, torch_dtype=torch_dtype, attn_implementation="sdpa")
+    # Load SDAR's weights when `model_name` has them (pretraining from scratch needs them: no AgenticWAM
+    # checkpoint initialises the code expert). A config-only dir (config + tokenizer + modeling code) builds a
+    # random-init body instead -- only valid when foundation_ckpt then overwrites every code-expert tensor
+    # (post-training).
+    import glob, os
+    from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+    has_weights = bool(glob.glob(os.path.join(str(model_name), "*.safetensors"))
+                       or glob.glob(os.path.join(str(model_name), "pytorch_model*.bin")))
+    if has_weights or not os.path.isdir(str(model_name)):
+        logger.info("Loading SDAR code-expert backbone %s ...", model_name)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name, trust_remote_code=True, torch_dtype=torch_dtype, attn_implementation="sdpa")
+    else:
+        logger.warning("SDAR dir %s has no weights: building the code-expert body from config (random init); "
+                       "foundation_ckpt must supply every code-expert tensor", model_name)
+        cfg = AutoConfig.from_pretrained(model_name, trust_remote_code=True)
+        model = AutoModelForCausalLM.from_config(
+            cfg, trust_remote_code=True, torch_dtype=torch_dtype, attn_implementation="sdpa")
     text_model = model.model
     qwen_layers = text_model.layers
     hidden_dim = qwen_layers[0].self_attn.q_proj.in_features

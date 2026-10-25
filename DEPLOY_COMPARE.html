@@ -1,0 +1,600 @@
+<title>Vega + Sharpa vs YAM Deployment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (max 1120px) with a sticky section bar; two-lane grids (YAM | Sharpa) for every comparison. */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --sunken: #eef1f4;
+  --ink: #18212c;
+  --muted: #586473;
+  --line: #d6dce3;
+  --yam: #136a86;
+  --yam-soft: #e1f0f5;
+  --sharpa: #a8501a;
+  --sharpa-soft: #fbe9dd;
+  --shared: #4a5462;
+  --shared-soft: #e9ecf0;
+  --bad: #b3261e;
+  --good: #24724a;
+  --code-ink: #1f2a36;
+  --mark: #fff2b8;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161c; --surface: #181f27; --sunken: #141a21; --ink: #e4e8ed; --muted: #9aa5b3; --line: #2b3440;
+    --yam: #63b9d6; --yam-soft: #15313b; --sharpa: #f0975e; --sharpa-soft: #3a2416;
+    --shared: #b3bcc8; --shared-soft: #222a34; --bad: #f2867e; --good: #6cc495; --code-ink: #d9e0e8; --mark: #4a3f12;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #181f27; --sunken: #141a21; --ink: #e4e8ed; --muted: #9aa5b3; --line: #2b3440;
+  --yam: #63b9d6; --yam-soft: #15313b; --sharpa: #f0975e; --sharpa-soft: #3a2416;
+  --shared: #b3bcc8; --shared-soft: #222a34; --bad: #f2867e; --good: #6cc495; --code-ink: #d9e0e8; --mark: #4a3f12;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15.5px; line-height: 1.6; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 0 72px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.08rem; }
+p { margin: 0; max-width: 70ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+p code, li code, td code { background: var(--sunken); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; overflow-wrap: anywhere; }
+a { color: var(--yam); }
+:focus-visible { outline: 2px solid var(--yam); outline-offset: 2px; }
+
+/* header */
+header.top { padding-block: 40px 24px; display: grid; gap: 14px; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.lede { color: var(--muted); font-size: 1.05rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--font-mono); font-size: 0.78rem; border: 1px solid var(--line); background: var(--surface); padding: 2px 8px; border-radius: 999px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.88rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.sw.yam { background: var(--yam); } .sw.sharpa { background: var(--sharpa); } .sw.shared { background: var(--shared); }
+
+/* section nav */
+nav.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); margin-inline: -20px; padding-inline: 20px; }
+nav.toc ul { list-style: none; margin: 0; padding: 10px 0; display: flex; gap: 18px; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; }
+nav.toc a { color: var(--muted); text-decoration: none; font-size: 0.88rem; font-weight: 500; }
+nav.toc a:hover { color: var(--ink); }
+
+section { padding-top: 44px; display: grid; gap: 16px; scroll-margin-top: 48px; }
+.sub { color: var(--muted); }
+
+/* start-here box */
+.start { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 10px; }
+.start ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+
+/* lane tags */
+.tag { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
+.tag.yam { color: var(--yam); background: var(--yam-soft); }
+.tag.sharpa { color: var(--sharpa); background: var(--sharpa-soft); }
+.tag.shared { color: var(--shared); background: var(--shared-soft); }
+.tag.new { color: var(--good); border: 1px solid var(--good); }
+
+/* tables */
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 0.92rem; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+thead th { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--sunken); }
+th.yamh { color: var(--yam); } th.sharpah { color: var(--sharpa); }
+td.k { font-weight: 600; width: 20%; }
+td.same { color: var(--muted); }
+tr.diff td.k::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--sharpa); margin-right: 8px; vertical-align: middle; }
+
+/* call tree */
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+.tree ul { margin-left: 18px; padding-left: 16px; border-left: 1px dashed var(--line); }
+.tree li { position: relative; padding: 6px 0 6px 0; }
+.tree ul > li::before { content: ""; position: absolute; left: -16px; top: 20px; width: 12px; border-top: 1px dashed var(--line); }
+.node { display: grid; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; max-width: 760px; }
+.node .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.node .file { font-family: var(--font-mono); font-size: 0.84rem; font-weight: 500; overflow-wrap: anywhere; }
+.node .fn { font-family: var(--font-mono); font-size: 0.84rem; color: var(--muted); }
+.node .what { font-size: 0.9rem; color: var(--muted); }
+.node.yam { border-left: 4px solid var(--yam); }
+.node.sharpa { border-left: 4px solid var(--sharpa); }
+.node.shared { border-left: 4px solid var(--shared); }
+.node .stop { font-size: 0.86rem; color: var(--bad); }
+
+/* lane flow */
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.controls .lbl { font-size: 0.85rem; color: var(--muted); margin-right: 4px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { font: inherit; font-size: 0.86rem; border: 0; background: transparent; color: var(--muted); padding: 6px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.flow { display: grid; gap: 10px; }
+.lanehead { display: grid; grid-template-columns: 44px 1fr 1fr; gap: 10px; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+.lanehead .y { color: var(--yam); } .lanehead .s { color: var(--sharpa); }
+.step { display: grid; grid-template-columns: 44px 1fr 1fr; gap: 10px; align-items: stretch; }
+.num { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; color: var(--muted); padding-top: 10px; text-align: center; font-variant-numeric: tabular-nums; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; min-width: 0; align-content: start; }
+.card.span { grid-column: 2 / 4; border-left: 4px solid var(--shared); }
+.card.y { border-left: 4px solid var(--yam); }
+.card.s { border-left: 4px solid var(--sharpa); }
+.card.none { border-style: dashed; color: var(--muted); background: transparent; }
+.card .loc { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); overflow-wrap: anywhere; }
+.card .t { font-weight: 600; }
+.card .d { font-size: 0.9rem; }
+.card .shape { font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink); background: var(--sunken); border-radius: 4px; padding: 1px 6px; justify-self: start; overflow-wrap: anywhere; }
+.card .br { font-size: 0.84rem; color: var(--bad); }
+.flow[data-show="yam"] .card.s, .flow[data-show="yam"] .lanehead .s { display: none; }
+.flow[data-show="sharpa"] .card.y, .flow[data-show="sharpa"] .lanehead .y { display: none; }
+.flow[data-show="yam"] .step, .flow[data-show="sharpa"] .step,
+.flow[data-show="yam"] .lanehead, .flow[data-show="sharpa"] .lanehead { grid-template-columns: 44px 1fr; }
+.flow[data-show="yam"] .card.span, .flow[data-show="sharpa"] .card.span { grid-column: 2 / 3; }
+
+/* code pairs */
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pane { min-width: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; display: flex; flex-direction: column; }
+.pane .ph { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--sunken); flex-wrap: wrap; }
+.pane.y .ph { border-top: 3px solid var(--yam); }
+.pane.s .ph { border-top: 3px solid var(--sharpa); }
+.pane .ph .file { font-family: var(--font-mono); font-size: 0.8rem; overflow-wrap: anywhere; }
+pre { margin: 0; padding: 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.55; color: var(--code-ink); flex: 1; }
+pre .c { color: var(--muted); }
+pre mark { background: var(--mark); color: inherit; border-radius: 2px; }
+.empty { padding: 14px 12px; color: var(--muted); font-size: 0.9rem; display: grid; gap: 6px; }
+.notes { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 0.92rem; }
+.block { display: grid; gap: 10px; }
+
+/* commands */
+.cmd { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.cmd .ch { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--sunken); flex-wrap: wrap; }
+.cmd .ch b { font-size: 0.92rem; }
+.copy { font: inherit; font-size: 0.8rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+.cmd .expect { padding: 8px 12px 12px; font-size: 0.9rem; color: var(--muted); border-top: 1px dashed var(--line); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.gaps { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.gaps li::marker { color: var(--sharpa); }
+
+@media (max-width: 760px) {
+  .pair, .grid2 { grid-template-columns: 1fr; }
+  .step, .lanehead { grid-template-columns: 30px 1fr; }
+  .lanehead .y, .lanehead .s { display: none; }
+  .card.span, .card.y, .card.s { grid-column: 2 / 3; }
+  .step .card.s { margin-top: -2px; }
+  .num { font-size: 0.95rem; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">AgenticWAM deployment · debugging guide</div>
+  <h1>Vega + Sharpa vs YAM Deployment</h1>
+  <p class="lede">How a camera frame and a joint vector travel from the robot to the model and back, for the YAM arms and for the new vega robot (Tianji arms + Sharpa hands). Both robots use the same server and model. They differ in five places, all chosen by one flag.</p>
+  <div class="chips">
+    <span class="chip">branch worktree-vega-sharpa-deploy</span>
+    <span class="chip">5b096b5 · 1958079 · 05c8697</span>
+    <span class="chip">not pushed</span>
+  </div>
+  <div class="legend">
+    <span><i class="sw yam"></i>YAM only</span>
+    <span><i class="sw sharpa"></i>Sharpa only</span>
+    <span><i class="sw shared"></i>Shared by both</span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <ul>
+    <li><a href="#start">Start here</a></li>
+    <li><a href="#differences">Differences</a></li>
+    <li><a href="#startup">Startup calls</a></li>
+    <li><a href="#act">One /act request</a></li>
+    <li><a href="#code">Code side by side</a></li>
+    <li><a href="#debug">Symptom → cause</a></li>
+    <li><a href="#checks">Checks to run</a></li>
+    <li><a href="#gaps">Known gaps</a></li>
+  </ul>
+</nav>
+
+<section id="start">
+  <div class="start">
+    <h3>Start here</h3>
+    <ul>
+      <li><b>One switch.</b> <code>--embodiment sharpa</code> (or <code>EMBODIMENT=sharpa</code> for <code>deploy/launch_server.sh</code>) turns on everything Sharpa-specific. The default, <code>yam</code>, runs exactly as before. The server never guesses the robot from the task name.</li>
+      <li><b>Most of the path is shared.</b> The HTTP server, request validation, JPEG/PNG decoding, the model call and the response format are the same files for both robots.</li>
+      <li><b>Five things differ:</b> the state size the robot sends (14 vs 58), the camera size and crop, a strict resolution check (Sharpa only), the kinematics library used for FK/IK, and how a predicted chunk is turned back into joints.</li>
+      <li><b>Where to start debugging:</b> read the error text first. Startup errors come from <code>PolicyRuntime.__init__</code>; per-request errors come back as HTTP 400 with the field name; silent bad motion is almost always a state-layout or kinematics problem (see <a href="#debug">Symptom → cause</a>).</li>
+    </ul>
+  </div>
+</section>
+
+<section id="differences">
+  <h2>What differs between the two robots</h2>
+  <p class="sub">Rows with a dot differ. All values are read from the code on the deploy branch.</p>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>Aspect</th><th class="yamh">YAM</th><th class="sharpah">Vega + Sharpa</th></tr></thead>
+    <tbody>
+      <tr class="diff"><td class="k">Flag</td><td><code>--embodiment yam</code> (default)</td><td><code>--embodiment sharpa</code>, with <code>TASK=posttrain_sharpa</code></td></tr>
+      <tr class="diff"><td class="k">Required training transform</td><td><code>YamUnifiedEEFTransform</code></td><td><code>TianjiSharpaUnifiedEEFTransform</code></td></tr>
+      <tr class="diff"><td class="k">State the robot sends</td><td>14-D <code>[L joint 0–5, L grip, R joint 0–5, R grip]</code></td><td>58-D <code>[L arm 7, L hand 22, R arm 7, R hand 22]</code></td></tr>
+      <tr class="diff"><td class="k">Raw vector the model's transform expects</td><td>82-D (FK poses, grippers, joints)</td><td>76-D (L pose 16, R pose 16, L hand 22, R hand 22)</td></tr>
+      <tr><td class="k">Model space</td><td class="same" colspan="2">64-D unified EEF for both: per arm, position 3 + rot6d 6, hand 22, gripper 1. Actions are deltas from the chunk-start pose.</td></tr>
+      <tr class="diff"><td class="k">Bridge module</td><td><code>deploy/common/yam_eef64.py</code></td><td><code>deploy/common/vega_eef64.py</code> <span class="tag new">new</span></td></tr>
+      <tr class="diff"><td class="k">Kinematics</td><td><code>utils/yam_fk_ik/yam_kinematics.py</code>, MuJoCo, <code>station.xml</code></td><td><code>utils/vega_fk_ik/vega_kinematics.py</code>, Pinocchio + Pink, <code>vega_1.urdf</code> <span class="tag new">new</span></td></tr>
+      <tr class="diff"><td class="k">IK method</td><td>Damped least squares, one arm at a time, 6 DOF, up to 100 iterations</td><td>Pink differential IK, both arms together, 7 DOF each, 5 iterations, home-pose posture target (daqp solver)</td></tr>
+      <tr class="diff"><td class="k">Decoding the delta chunk</td><td><code>apply_delta_9d</code> from YAM kinematics, then IK</td><td>Reuses <code>TianjiSharpaUnifiedEEFTransform.backward</code>, then IK</td></tr>
+      <tr class="diff"><td class="k">Grippers / hands</td><td>Gripper value passes through (absolute)</td><td>22-D hand per side passes through (absolute); zero gripper dims are dropped</td></tr>
+      <tr class="diff"><td class="k">Raw camera frame</td><td>640×480 (any size accepted)</td><td>Exactly 640×360 RGB for all three cameras, or HTTP 400</td></tr>
+      <tr class="diff"><td class="k">Camera preprocessing</td><td>Generic: resize the full frame to 224×320 inside <code>deploy_policy._build_obs_video</code></td><td>Training recipe first (<code>sharpa_obs.py</code>): head crop rows 0–280, cols 140–540, then resize; wrists resized whole. The generic step then changes nothing.</td></tr>
+      <tr class="diff"><td class="k"><code>AGENTICWAM_EVAL_PREPROC</code></td><td><code>parity</code> (default), <code>legacy</code>, <code>parity_crop</code></td><td><code>parity</code> or <code>legacy</code>; <code>parity_crop</code> is refused at startup</td></tr>
+      <tr class="diff"><td class="k">Real-time chunking (RTC)</td><td>Supported (<code>committed</code> / <code>freeze</code> in the request)</td><td>Ignored</td></tr>
+      <tr class="diff"><td class="k">Warmup frame</td><td>480×640</td><td>360×640</td></tr>
+      <tr class="diff"><td class="k"><code>/health</code> <code>action_space</code></td><td><code>yam_eef64</code></td><td><code>vega_eef64</code>, plus <code>camera_resolution</code></td></tr>
+      <tr class="diff"><td class="k">Robot-side client in repo</td><td><code>deploy/robot/agenticwam_client.py</code></td><td>None yet (the YAM client refuses <code>action_dim</code> ≠ 14)</td></tr>
+      <tr class="diff"><td class="k">Offline bridge test</td><td><code>deploy/tests/validate_yam_eef64.py</code></td><td>Only the self-test in <code>vega_kinematics.py</code></td></tr>
+      <tr class="diff"><td class="k">Extra packages</td><td><code>mujoco</code></td><td><code>pin&gt;=3.2</code>, <code>pin-pink</code>, <code>qpsolvers</code>, <code>daqp</code></td></tr>
+      <tr><td class="k">Code tokens</td><td class="same" colspan="2"><code>INFER_CODE_TOKENS</code> must equal the training run's <code>model.infer_code_tokens</code> (128 for the trex Sharpa run; the launcher default is 64).</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="startup">
+  <h2>Startup: who calls whom</h2>
+  <p class="sub">What runs once when you start the server. Every red line is a check that stops startup with a message; search the log for that text.</p>
+  <ul class="tree">
+    <li><div class="node shared"><div class="head"><span class="file">deploy/launch_server.sh</span><span class="tag shared">shared</span></div>
+      <div class="what">Needs <code>CKPT</code>, <code>DATASET</code>, <code>INSTR</code>, <code>AGENTICWAM_DEPLOY_TOKEN</code>. Turns <code>EMBODIMENT</code> into <code>--embodiment</code> and <code>INFER_CODE_TOKENS</code> into <code>model.infer_code_tokens</code>.</div></div>
+      <ul>
+        <li><div class="node shared"><div class="head"><span class="file">deploy/remote/server.py</span><span class="fn">main()</span><span class="tag shared">shared</span></div>
+          <div class="what">Parses flags, builds <code>PolicyRuntime</code>, runs the warmup, then serves <code>/ping</code>, <code>/health</code>, <code>/act</code>, <code>/reset</code> on port 8712.</div></div>
+          <ul>
+            <li><div class="node shared"><div class="head"><span class="file">deploy/common/policy_runtime.py</span><span class="fn">PolicyRuntime.__init__()</span><span class="tag shared">shared</span></div>
+              <div class="what">Composes the task config, then looks up <code>_EMBODIMENTS[embodiment]</code> (line 41) to pick the transform, bridge, client dimension and image step.</div>
+              <div class="stop">Stops if: the embodiment name is unknown; <code>sharpa</code> is given a checkpoint whose <code>model.action_dim</code> is not 64; the task's transform does not end in the required name.</div></div>
+              <ul>
+                <li><div class="node yam"><div class="head"><span class="file">deploy/common/yam_eef64.py</span><span class="tag yam">yam</span></div>
+                  <div class="what">Imported by name through <code>importlib</code>. Loads <code>utils/yam_fk_ik/yam_kinematics.py</code>, which builds the MuJoCo model from <code>station/station/station.xml</code>.</div></div></li>
+                <li><div class="node sharpa"><div class="head"><span class="file">deploy/common/vega_eef64.py</span><span class="tag sharpa">sharpa</span></div>
+                  <div class="what">Imports <code>TianjiSharpaUnifiedEEFTransform</code> from <code>src/agenticwam/datasets/lerobot/transforms/tianji_sharpa_unified_eef.py</code> and <code>utils/vega_fk_ik/vega_kinematics.py</code>, which loads <code>urdf/vega_1.urdf</code> with Pinocchio.</div>
+                  <div class="stop">Stops if <code>pinocchio</code> is missing (ImportError at import time). <code>pink</code>, <code>qpsolvers</code> and <code>daqp</code> are imported on the first IK call instead, so a missing one shows up during warmup.</div></div></li>
+                <li><div class="node sharpa"><div class="head"><span class="file">policy_runtime.py</span><span class="fn">parity_crop check</span><span class="tag sharpa">sharpa</span></div>
+                  <div class="stop">Stops if <code>AGENTICWAM_EVAL_PREPROC=parity_crop</code>: it would crop the already-cropped Sharpa frame again.</div></div></li>
+                <li><div class="node sharpa"><div class="head"><span class="file">deploy/common/resolution_guard.py</span><span class="fn">sharpa_guard()</span><span class="tag sharpa">sharpa</span></div>
+                  <div class="what">Creates the per-camera 360×640×3 check used on every request.</div></div></li>
+                <li><div class="node shared"><div class="head"><span class="file">robotwin/deploy/deploy_policy.py</span><span class="fn">AgenticWAMCosmosRobotWinPolicy(...)</span><span class="tag shared">shared</span></div>
+                  <div class="what">Loads the checkpoint, VAE, text encoder and dataset stats. A missing <code>CKPT</code> path gives SMOKE MODE: shapes flow but actions are meaningless.</div></div></li>
+              </ul>
+            </li>
+            <li><div class="node shared"><div class="head"><span class="file">policy_runtime.py</span><span class="fn">PolicyRuntime.warmup()</span><span class="tag shared">shared</span></div>
+              <div class="what">One fake inference with black frames: 480×640 for YAM, 360×640 for Sharpa. This exercises the whole <code>/act</code> path, IK included, so a broken FK/IK install fails here, before the robot is connected. The resolution check's counters are reset afterwards.</div></div></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</section>
+
+<section id="act">
+  <h2>One /act request, step by step</h2>
+  <p class="sub">Each row is one function call, in order. Shapes are what leaves that step. The red line says what you see when that step fails.</p>
+  <div class="controls">
+    <span class="lbl">Show</span>
+    <div class="seg" role="group" aria-label="Which robot to show">
+      <button type="button" id="show-both" data-show="both" aria-pressed="true">Both</button>
+      <button type="button" id="show-yam" data-show="yam" aria-pressed="false">YAM</button>
+      <button type="button" id="show-sharpa" data-show="sharpa" aria-pressed="false">Sharpa</button>
+    </div>
+  </div>
+  <div class="flow" id="flow" data-show="both">
+    <div class="lanehead"><span></span><span class="y">YAM</span><span class="s">Vega + Sharpa</span></div>
+
+    <div class="step"><div class="num">1</div>
+      <div class="card y"><div class="loc">deploy/robot/agenticwam_client.py · infer()</div><div class="t">Robot sends POST /act</div><div class="d">Maps station cameras top/left/right to <code>head_camera</code>/<code>left_camera</code>/<code>right_camera</code>, JPEG-encodes them, sends the 14-D state.</div><span class="shape">3 × JPEG 640×480 · state[14]</span></div>
+      <div class="card s"><div class="loc">your vega client (not in repo yet)</div><div class="t">Robot sends POST /act</div><div class="d">Must send <code>head_camera</code> = head_left, <code>left_camera</code>/<code>right_camera</code> = wrists, at native 640×360, with no client-side resize, plus the 58-D state.</div><span class="shape">3 × JPEG/PNG 640×360 · state[58]</span></div>
+    </div>
+
+    <div class="step"><div class="num">2</div>
+      <div class="card span"><div class="loc">deploy/remote/server.py · do_act() → deploy/common/contract.py · ActRequest.from_dict()</div><div class="t">Validate the request</div><div class="d">Checks the protocol version, that all three cameras are present, and that the state has exactly <code>rt.action_dim</code> numbers with no NaN.</div><span class="shape">YAM expects 14 · Sharpa expects 58</span><div class="br">Fails as HTTP 400 <code>contract: state: expected 58 values, got 14</code> (or a missing camera).</div></div>
+    </div>
+
+    <div class="step"><div class="num">3</div>
+      <div class="card span"><div class="loc">deploy/common/obs_codec.py · decode_observation()</div><div class="t">Decode images</div><div class="d">base64 → Pillow → <code>.convert("RGB")</code> → uint8 array. Grayscale or RGBA input is silently converted to 3 channels here.</div><span class="shape">{camera: H×W×3 uint8}</span></div>
+    </div>
+
+    <div class="step"><div class="num">4</div>
+      <div class="card y none"><div class="t">No resolution check</div><div class="d">Any frame size is accepted. A wrong aspect ratio changes framing silently; <code>deploy/robot/obs_pipeline.py</code> can preview what the model sees.</div></div>
+      <div class="card s"><div class="loc">resolution_guard.py · ResolutionGuard.check()</div><div class="t">Exact size check</div><div class="d">Every camera must be 360×640×3, because the head crop is in fixed pixel coordinates. Nothing is rescaled.</div><div class="br">HTTP 400 <code>images['head_camera']: got 1280x720 (WxH) 3ch … same 16:9 aspect but a different resolution</code></div></div>
+    </div>
+
+    <div class="step"><div class="num">5</div>
+      <div class="card y"><div class="loc">yam_eef64.state14_to_82() → yam_kinematics.fk_both()</div><div class="t">Joints → raw vector (FK)</div><div class="d">MuJoCo FK of both 6-joint arms at the grasp sites.</div><span class="shape">state[14] → raw[82]</span></div>
+      <div class="card s"><div class="loc">vega_eef64.state58_to_raw76() → vega_kinematics.fk_both()</div><div class="t">Joints → raw vector (FK)</div><div class="d">Pinocchio FK of both 7-joint arms at <code>L_ee</code>/<code>R_ee</code>, torso fixed at (0.9, 1.57, 0.1), head at (0.28, 0, 0). Hands copied through.</div><span class="shape">state[58] → raw[76]</span><div class="br">AssertionError <code>expected [58] state</code> → HTTP 500.</div></div>
+    </div>
+
+    <div class="step"><div class="num">6</div>
+      <div class="card y none"><div class="t">No Sharpa step</div><div class="d">Raw 640×480 frames go straight to step 7.</div></div>
+      <div class="card s"><div class="loc">policy_runtime._sharpa_image_preproc() → sharpa_obs.head_camera_view() / wrist_camera_view()</div><div class="t">Training-identical crop</div><div class="d">Head: rows 0–280, cols 140–540, then INTER_AREA resize. Wrists: whole frame resized. Same recipe as <code>utils/convert_trex_v30_to_v21.py</code>.</div><span class="shape">3 × 640×360 → 3 × 320×224</span></div>
+    </div>
+
+    <div class="step"><div class="num">7</div>
+      <div class="card span"><div class="loc">robotwin/deploy/deploy_policy.py · _infer_action_chunk() → _build_obs_video(), _normalize_state(), model, _denormalize_action()</div><div class="t">Run the model</div><div class="d">Images: resize to 224×320, the training resize/center-crop, normalise to [-1, 1] (for Sharpa the resize and crop change nothing). State: the task's transform turns the raw vector into 64-D, then the dataset stats normalise it. The model returns a normalised chunk that is de-normalised.</div><span class="shape">video [1,3,3,224,320] · state [1,64] → delta chunk [T,64]</span><div class="br">Wrong <code>DATASET</code> gives wrong stats: no error, just bad actions.</div></div>
+    </div>
+
+    <div class="step"><div class="num">8</div>
+      <div class="card y"><div class="loc">yam_eef64.decode_chunk()</div><div class="t">Delta → absolute joints (IK)</div><div class="d">For each row: <code>apply_delta_9d</code> on the chunk-start pose, then <code>yam_kinematics.ik()</code> per arm, seeded with the previous row. Gripper copied.</div><span class="shape">[T,64] → [T,14]</span></div>
+      <div class="card s"><div class="loc">vega_eef64.decode_chunk()</div><div class="t">Delta → absolute joints (IK)</div><div class="d"><code>TianjiSharpaUnifiedEEFTransform.backward</code> turns deltas into absolute poses; each row goes to <code>vega_kinematics.ik_both()</code> (both arms at once), seeded with the previous row. Hands copied.</div><span class="shape">[T,64] → [T,58]</span></div>
+    </div>
+
+    <div class="step"><div class="num">9</div>
+      <div class="card span"><div class="loc">policy_runtime.infer()</div><div class="t">Count IK misses</div><div class="d">Rows that miss 1 mm are still used but added to <code>ik_failures</code> (shown in <code>/health</code>) and logged as <code>IK missed tolerance on N arm-rows</code>.</div></div>
+    </div>
+
+    <div class="step"><div class="num">10</div>
+      <div class="card span"><div class="loc">server.py · ActResponse(...).to_dict()</div><div class="t">Reply</div><div class="d">Absolute targets (<code>action_type: qpos_abs</code>) plus timing: <code>queue_ms</code>, <code>infer_ms</code>, <code>server_ms</code>. The client commands them directly; it must not add the state again.</div><span class="shape">action_chunk [T,14] (YAM) · [T,58] (Sharpa)</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="code">
+  <h2>The code, side by side</h2>
+  <p class="sub">Trimmed excerpts from the deploy branch. Highlighted lines are where the two robots differ.</p>
+
+  <div class="block">
+    <h3>Picking the robot: <code>_EMBODIMENTS</code></h3>
+    <div class="pane"><div class="ph"><span class="file">deploy/common/policy_runtime.py:41</span><span class="tag shared">shared</span></div>
+<pre>_EMBODIMENTS = {
+    "yam":    {"transform_suffix": <mark>"YamUnifiedEEFTransform"</mark>,
+               "bridge": <mark>"yam_eef64"</mark>, "state_to_raw_attr": <mark>"state14_to_82"</mark>,
+               "client_action_dim": <mark>14</mark>, "action_space_label": "yam_eef64", "image_preproc": <mark>None</mark>},
+    "sharpa": {"transform_suffix": <mark>"TianjiSharpaUnifiedEEFTransform"</mark>,
+               "bridge": <mark>"vega_eef64"</mark>, "state_to_raw_attr": <mark>"state58_to_raw76"</mark>,
+               "client_action_dim": <mark>58</mark>, "action_space_label": "vega_eef64", "image_preproc": <mark>"sharpa"</mark>},
+}
+<span class="c"># later in __init__:</span>
+self._eef64 = importlib.import_module(f".{spec['bridge']}", package=__package__)
+self._state_to_raw = getattr(self._eef64, spec["state_to_raw_attr"])</pre></div>
+    <ul class="notes"><li>To add a third robot, you add a row here plus a bridge module with the same two functions: a state-to-raw function and <code>decode_chunk</code>.</li></ul>
+  </div>
+
+  <div class="block">
+    <h3>State in: joints → raw vector</h3>
+    <div class="pair">
+      <div class="pane y"><div class="ph"><span class="file">deploy/common/yam_eef64.py:43 · yam_kinematics.py:92</span><span class="tag yam">yam</span></div>
+<pre>def state14_to_82(state14):
+    return yk.state14_to_82(np.asarray(state14, np.float64))
+
+<span class="c"># yam_kinematics.state14_to_82</span>
+o = np.zeros(<mark>82</mark>, np.float32)
+TL, TR = fk_both(s14[<mark>0:6</mark>], s14[<mark>7:13</mark>])
+o[0:16] = TL.reshape(16); o[16:32] = TR.reshape(16)
+<mark>o[32] = s14[6]; o[33] = s14[13]</mark>          <span class="c"># grippers</span>
+<mark>o[34:40] = s14[0:6]; o[40:46] = s14[7:13]</mark> <span class="c"># joints</span></pre></div>
+      <div class="pane s"><div class="ph"><span class="file">deploy/common/vega_eef64.py:58</span><span class="tag sharpa">sharpa</span></div>
+<pre>def state58_to_raw76(state58):
+    s = np.asarray(state58, np.float64).reshape(-1)
+    assert s.shape == (<mark>58</mark>,)
+    T_L, T_R = vk.fk_both(s[<mark>L_ARM</mark>], s[<mark>R_ARM</mark>])  <span class="c"># 0:7, 29:36</span>
+    raw76 = np.zeros(<mark>76</mark>, np.float64)
+    raw76[0:16] = T_L.reshape(-1)
+    raw76[16:32] = T_R.reshape(-1)
+    <mark>raw76[32:54] = s[L_HAND]</mark>   <span class="c"># 7:29</span>
+    <mark>raw76[54:76] = s[R_HAND]</mark>   <span class="c"># 36:58</span>
+    return raw76</pre></div>
+    </div>
+    <ul class="notes">
+      <li>Both write the two 4×4 EEF poses into slots 0–31 in the same order (left, right). After that the layouts differ: YAM appends grippers and joints, Sharpa appends the two hands.</li>
+      <li>If the robot sends its 58 values in a different order (for example both arms first, then both hands), nothing fails: FK runs on hand values and the arms move wrongly. Check the order first when motion looks wrong.</li>
+    </ul>
+  </div>
+
+  <div class="block">
+    <h3>Images in: camera preprocessing</h3>
+    <div class="pair">
+      <div class="pane y"><div class="ph"><span class="file">(no YAM-specific step)</span><span class="tag yam">yam</span></div>
+        <div class="empty"><p>YAM frames go straight into the shared <code>deploy_policy._build_obs_video</code>, which resizes the whole frame to 224×320 under the default <code>AGENTICWAM_EVAL_PREPROC=parity</code>.</p><p>Robot-side helper: <code>deploy/robot/obs_pipeline.py</code> has <code>check_aspect()</code> and <code>preview_grid()</code> for looking at what the model will see.</p></div></div>
+      <div class="pane s"><div class="ph"><span class="file">deploy/common/sharpa_obs.py:27</span><span class="tag sharpa">sharpa</span></div>
+<pre>HEAD_CROP = (<mark>0, 280, 140, 540</mark>)   <span class="c"># rows y0:y1, cols x0:x1</span>
+MODEL_W, MODEL_H = 320, 224
+RAW_SHAPE = (<mark>360, 640, 3</mark>)
+
+def head_camera_view(frame):
+    assert frame.shape == RAW_SHAPE
+    y0, y1, x0, x1 = HEAD_CROP
+    cropped = frame[y0:y1, x0:x1]
+    return cv2.resize(cropped, (MODEL_W, MODEL_H),
+                      interpolation=cv2.INTER_AREA)
+
+def wrist_camera_view(frame):
+    assert frame.shape == RAW_SHAPE
+    return cv2.resize(frame, (MODEL_W, MODEL_H),
+                      interpolation=cv2.INTER_AREA)</pre></div>
+    </div>
+    <ul class="notes">
+      <li>The resolution check (step 4) runs before this, so the <code>assert</code> lines normally never fire during <code>/act</code>.</li>
+      <li>The crop values must match <code>HEAD_CROP</code> in <code>utils/convert_trex_v30_to_v21.py</code>. If you change one, change both and retrain.</li>
+    </ul>
+  </div>
+
+  <div class="block">
+    <h3>Chunk out: delta → absolute joints</h3>
+    <div class="pair">
+      <div class="pane y"><div class="ph"><span class="file">deploy/common/yam_eef64.py:66</span><span class="tag yam">yam</span></div>
+<pre>def decode_chunk(delta64, state14):
+    T_L, T_R = yk.fk_both(s[0:6], s[7:13])  <span class="c"># anchor</span>
+    qL, qR = s[0:6].copy(), s[7:13].copy()  <span class="c"># IK seed</span>
+    out = np.zeros((d.shape[0], <mark>14</mark>))
+    for t in range(d.shape[0]):
+        <mark>ok_l, qL = yk.ik(yk.apply_delta_9d(T_L, d[t, L_EEF]),</mark>
+        <mark>                  "left", init6=qL)</mark>
+        <mark>ok_r, qR = yk.ik(yk.apply_delta_9d(T_R, d[t, R_EEF]),</mark>
+        <mark>                  "right", init6=qR)</mark>
+        failures += (not ok_l) + (not ok_r)
+        out[t, 0:6] = qL
+        <mark>out[t, 6] = d[t, L_GRIP]</mark>
+        out[t, 7:13] = qR
+        <mark>out[t, 13] = d[t, R_GRIP]</mark>
+    return out, failures</pre></div>
+      <div class="pane s"><div class="ph"><span class="file">deploy/common/vega_eef64.py:81</span><span class="tag sharpa">sharpa</span></div>
+<pre>def decode_chunk(delta64, state58):
+    raw76 = state58_to_raw76(s)
+    <mark>state64 = _TRANSFORM._state64(raw76 …)</mark>
+    <mark>abs64 = _TRANSFORM.backward(batch)["action"]["default"][0]</mark>
+    qL, qR = s[L_ARM].copy(), s[R_ARM].copy()  <span class="c"># IK seed</span>
+    out = np.zeros((d.shape[0], <mark>58</mark>))
+    for t in range(d.shape[0]):
+        T_L = _pose_from_abs9(abs64[t, L_EEF9])
+        T_R = _pose_from_abs9(abs64[t, R_EEF9])
+        <mark>ok, qL, qR = vk.ik_both(T_L, T_R, qL, qR)</mark>
+        failures += int(not ok)
+        out[t, L_ARM] = qL
+        <mark>out[t, L_HAND] = abs64[t, L_HAND64]</mark>
+        out[t, R_ARM] = qR
+        <mark>out[t, R_HAND] = abs64[t, R_HAND64]</mark>
+    return out, failures</pre></div>
+    </div>
+    <ul class="notes">
+      <li>Both anchor every row to the chunk-start pose and seed IK with the previous row, so IK follows the trajectory.</li>
+      <li>YAM rebuilds the absolute pose with its own <code>apply_delta_9d</code>. Sharpa calls the training transform's <code>backward</code>, so the delta convention cannot drift from training.</li>
+      <li>YAM counts a failure per arm (up to 2 per row). Sharpa counts one per row, because both arms are solved together.</li>
+    </ul>
+  </div>
+
+  <div class="block">
+    <h3>IK solver</h3>
+    <div class="pair">
+      <div class="pane y"><div class="ph"><span class="file">utils/yam_fk_ik/yam_kinematics.py:69</span><span class="tag yam">yam</span></div>
+<pre>def ik(T_target, arm="left", init6=None,
+       iters=<mark>100</mark>, damp=1e-4):
+    <span class="c"># MuJoCo damped least squares, one arm, 6 DOF</span>
+    for _ in range(iters):
+        mujoco.mj_kinematics(_m, _d)
+        ...
+        if norm(ep) &lt; 1e-4 and norm(er) &lt; 1e-3:
+            break
+        dq = J.T @ solve(J @ J.T + damp * I, err)
+        _d.qpos[q] += np.clip(dq, -0.3, 0.3)
+    return norm(ep) &lt; <mark>1e-3</mark>, _d.qpos[q].copy()</pre></div>
+      <div class="pane s"><div class="ph"><span class="file">utils/vega_fk_ik/vega_kinematics.py:115</span><span class="tag sharpa">sharpa</span></div>
+<pre>def ik_both(T_L, T_R, initL7, initR7,
+            iters=<mark>5</mark>, dt=0.05):
+    <span class="c"># Pink differential IK, both arms, 7 DOF each</span>
+    left_task  = FrameTask("L_ee", position_cost=50.0, ...)
+    right_task = FrameTask("R_ee", position_cost=50.0, ...)
+    smoothness.set_target(initial_qpos)
+    <mark>regularization.set_target(_arms.default_qpos)</mark>  <span class="c"># home pose</span>
+    for _ in range(iters):
+        v = _pink_solve_ik(..., solver=<mark>"daqp"</mark>)
+        configuration.integrate_inplace(v, dt)
+        <span class="c"># clip to joint limits</span>
+    pos_err = max(|T_L_actual - T_L|, |T_R_actual - T_R|)
+    return pos_err &lt; <mark>1e-3</mark>, qL7, qR7</pre></div>
+    </div>
+    <ul class="notes">
+      <li>The vega arms have 7 joints for a 6-D target, so many joint solutions reach the same pose. The home-pose target (<code>LEFT_ARM_HOME</code> / <code>RIGHT_ARM_HOME</code> from the T-Rex teleop config) picks one. A wrong home pose gives odd elbow positions without any error.</li>
+      <li>5 iterations is the teleop setting, which assumes small steps between targets. A large jump between rows can leave the position error above 1 mm and raise <code>ik_failures</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="debug">
+  <h2>Symptom → cause</h2>
+  <p class="sub">Find your message or symptom in the left column.</p>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th>What you see</th><th>Where it comes from</th><th>What to check</th></tr></thead>
+    <tbody>
+      <tr><td><code>--embodiment 'sharpa' requires TianjiSharpaUnifiedEEFTransform, but task … uses [...]</code></td><td><code>policy_runtime.py</code>, startup</td><td><code>TASK</code> must be <code>posttrain_sharpa</code> when <code>EMBODIMENT=sharpa</code>, and <code>posttrain_yam</code> with <code>yam</code>.</td></tr>
+      <tr><td><code>--embodiment 'sharpa' expects a 64-D unified-EEF checkpoint, but … model.action_dim=…</code></td><td><code>policy_runtime.py</code>, startup</td><td>The task config's <code>model.action_dim</code> is not 64. Use the Sharpa post-training task, not a joint-space one.</td></tr>
+      <tr><td><code>AGENTICWAM_EVAL_PREPROC=parity_crop re-crops the Sharpa frame</code></td><td><code>policy_runtime.py</code>, startup</td><td><code>unset AGENTICWAM_EVAL_PREPROC</code>, or set it to <code>parity</code> or <code>legacy</code>.</td></tr>
+      <tr><td><code>ModuleNotFoundError: pinocchio</code> / <code>pink</code> / <code>daqp</code></td><td><code>vega_kinematics.py</code> import or first IK call (warmup)</td><td>Install <code>pin&gt;=3.2 pin-pink qpsolvers daqp</code> in the server's Python (<code>PYTHON=</code> in the launch command).</td></tr>
+      <tr><td><code>SMOKE MODE: checkpoint missing</code></td><td><code>server.py</code> / <code>policy_runtime.py</code></td><td>Expected for the dry start with a fake <code>CKPT</code>. On the robot it means the checkpoint path is wrong: do not drive the arm.</td></tr>
+      <tr><td>HTTP 400 <code>contract: state: expected 58 values, got 14</code></td><td><code>contract.ActRequest.from_dict</code></td><td>The client is sending YAM state, or the server was started with the wrong <code>EMBODIMENT</code>. <code>GET /health</code> shows <code>action_dim</code> and <code>embodiment</code>.</td></tr>
+      <tr><td>HTTP 400 <code>images['head_camera']: got 1280x720 … needs exactly 640x360</code></td><td><code>resolution_guard.check</code></td><td>Set the camera driver to 640×360. The message names the likely cause: swapped W/H, other aspect ratio, or same aspect but different size.</td></tr>
+      <tr><td>HTTP 400 <code>images: missing camera 'left_camera'</code></td><td><code>contract.ActRequest.from_dict</code></td><td>Keys must be exactly <code>head_camera</code>, <code>left_camera</code>, <code>right_camera</code>.</td></tr>
+      <tr><td>YAM client exits with <code>server serves action_dim=58; this client speaks 14-D YAM joints</code></td><td><code>deploy/robot/agenticwam_client.py</code></td><td>That client is YAM-only. The vega station needs its own client.</td></tr>
+      <tr><td>HTTP 500 with a traceback in the response</td><td>Any unhandled exception in <code>/act</code></td><td>The server log has the full traceback (<code>UNHANDLED on /act</code>). Shape asserts in <code>vega_eef64</code> or <code>sharpa_obs</code> land here.</td></tr>
+      <tr><td>Log: <code>IK missed tolerance on N arm-rows</code>, <code>/health</code> <code>ik_failures</code> rising</td><td><code>vega_eef64.decode_chunk</code> → <code>ik_both</code></td><td>The model asks for poses IK can't reach in 5 steps. Check the state order, that the torso/head constants match the robot, and that joint units are radians.</td></tr>
+      <tr><td>Arm moves to the wrong place, no error</td><td>Usually step 5 or step 8</td><td>Run the kinematics self-test. Compare <code>fk_both</code> on a recorded state with the dataset's pose. Check the 58-D order <code>[L arm 7, L hand 22, R arm 7, R hand 22]</code>.</td></tr>
+      <tr><td>Hands do the wrong thing, arms look fine</td><td>Hands pass through untouched</td><td>Hand values are copied in and out without changes. Check the hand units and joint order against the training <code>observation.state</code>.</td></tr>
+      <tr><td>Policy runs but looks like it doesn't see the scene</td><td>Steps 3, 6, 7</td><td>Wrong camera mapped to <code>head_camera</code>, a grayscale feed (silently made 3-channel in step 3), or a <code>DATASET</code> whose stats don't match the checkpoint.</td></tr>
+      <tr><td>Generated code is cut off or odd</td><td>Launch settings</td><td><code>INFER_CODE_TOKENS</code> must equal the training value (128 for the trex run). The launcher default is 64.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="checks">
+  <h2>Checks to run before the robot</h2>
+  <p class="sub">In this order. Each needs only the deploy venv; the first one needs no GPU.</p>
+  <div class="grid2">
+    <div class="cmd"><div class="ch"><b>1 · FK → IK round trip</b><button type="button" class="copy" data-target="c1">Copy</button></div>
+<pre id="c1">python utils/vega_fk_ik/vega_kinematics.py</pre>
+      <div class="expect">Expect <code>FK/IK ok=True</code> and small <code>max|dqL|</code>, <code>max|dqR|</code>. An ImportError here means a missing package. Not yet run on any machine.</div></div>
+    <div class="cmd"><div class="ch"><b>2 · Dry start with a fake checkpoint</b><button type="button" class="copy" data-target="c2">Copy</button></div>
+<pre id="c2">CKPT=/nonexistent.pt DATASET=$PWD/data_local/trex_tong_transfer_aw76_v21 \
+INSTR="test" TASK=posttrain_sharpa EMBODIMENT=sharpa \
+INFER_CODE_TOKENS=128 AGENTICWAM_DEPLOY_TOKEN=test \
+bash deploy/launch_server.sh --override paths=r6000</pre>
+      <div class="expect">Expect <code>SMOKE MODE</code>, then <code>warmup done</code> and a <code>READY | … embodiment=sharpa action_dim=58</code> line. The warmup runs FK, the crop and IK once.</div></div>
+    <div class="cmd"><div class="ch"><b>3 · Read /health</b><button type="button" class="copy" data-target="c3">Copy</button></div>
+<pre id="c3">curl -s -H "Authorization: Bearer $AGENTICWAM_DEPLOY_TOKEN" \
+  http://127.0.0.1:8712/health | python -m json.tool</pre>
+      <div class="expect">Check <code>embodiment: sharpa</code>, <code>action_dim: 58</code>, <code>action_space: vega_eef64</code>, <code>camera_resolution.expected</code>, and <code>ik_failures: 0</code>.</div></div>
+    <div class="cmd"><div class="ch"><b>YAM equivalent (for comparison)</b><button type="button" class="copy" data-target="c4">Copy</button></div>
+<pre id="c4">python deploy/tests/validate_yam_eef64.py</pre>
+      <div class="expect">Replays a recorded YAM episode through the bridge with no GPU. Sharpa has no recorded-episode test like this yet.</div></div>
+  </div>
+</section>
+
+<section id="gaps">
+  <h2>Known gaps</h2>
+  <ul class="gaps">
+    <li><b>Real FK/IK not run yet.</b> Pinocchio and Pink weren't installed on the machine where the bridge was tested, so the tests used stub kinematics. Run check 1 first.</li>
+    <li><b>No vega robot client.</b> <code>deploy/robot/agenticwam_client.py</code> only speaks 14-D YAM. The station side needs a client that sends 640×360 frames and the 58-D state in the order above.</li>
+    <li><b>No recorded-episode test for the Sharpa bridge.</b> YAM has <code>validate_yam_eef64.py</code>. A Sharpa version would replay one converted episode through <code>state58_to_raw76</code> and <code>decode_chunk</code> and compare with the recorded joints.</li>
+    <li><b>RTC is ignored for Sharpa.</b> <code>committed</code> and <code>freeze</code> in the request are not used.</li>
+    <li><b>Grayscale and RGBA don't reach the resolution check.</b> <code>obs_codec</code> converts every image to RGB first, so the channel messages in <code>resolution_guard.diagnose</code> only appear when <code>PolicyRuntime</code> is called directly.</li>
+    <li><b>Older server stays YAM-only.</b> <code>deploy/deploy_server.py</code> has no <code>--embodiment</code> flag. Use <code>deploy/remote/server.py</code> through <code>deploy/launch_server.sh</code>.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+(function () {
+  var flow = document.getElementById('flow');
+  var buttons = document.querySelectorAll('.seg button');
+  function show(which) {
+    flow.setAttribute('data-show', which);
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.show === which)); });
+    try { localStorage.setItem('lane', which); } catch (e) {}
+  }
+  buttons.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.show); }); });
+  try { var saved = localStorage.getItem('lane'); if (saved === 'yam' || saved === 'sharpa' || saved === 'both') show(saved); } catch (e) {}
+
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(btn.dataset.target);
+      var text = el.textContent;
+      function selectIt() {
+        var r = document.createRange(); r.selectNodeContents(el);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        btn.textContent = 'Selected';
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { btn.textContent = 'Copied'; }, selectIt);
+      } else { selectIt(); }
+      setTimeout(function () { btn.textContent = 'Copy'; }, 1600);
+    });
+  });
+})();
+</script>

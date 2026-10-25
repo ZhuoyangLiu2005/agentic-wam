@@ -74,3 +74,6 @@ configs/robotwin/site.yaml
 # Per-machine paths files (configs/paths/<machine>.yaml); only the template is tracked
 configs/paths/*.yaml
 !configs/paths/default.yaml
+
+# user API key (r6000)
+API-key.txt

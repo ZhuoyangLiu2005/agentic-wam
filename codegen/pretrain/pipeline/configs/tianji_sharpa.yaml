@@ -1,0 +1,24 @@
+# Labeling config for the post-training Tianji + Sharpa trex tong-transfer dataset (docs/CODE_ANNOTATION.md §4).
+# Launch through scripts/posttrain_annotation_sharpa.sh with
+#   CODEGEN_CONFIG=configs/tianji_sharpa.yaml TIANJI_DATASET=<labeling view> VLM_API_KEY=<key>
+# The dataset is NOT a config key for this embodiment: it comes from TIANJI_DATASET (the labeling view).
+# Precedence per key: CLI flag > env var > this file > built-in default.
+
+# --- this run ----------------------------------------------------------------
+embodiment: tianji_sharpa
+tag: v1                                             # campaign version tag
+vanilla: false
+
+# --- actor -------------------------------------------------------------------
+vlm_url: https://inference-api.nvidia.com/v1/chat/completions   # key in VLM_API_KEY, never here
+coder_model: gcp/google/gemini-3.1-pro-preview      # run dirs use model_short -> gemini-3.1-pro
+yam_frame_gap: 40                                   # tianji_sharpa samples with the robot (yam) gap
+repair_retries: 2
+max_slices: 0
+vlm_max_tokens: 4096
+vlm_temperature: 0.1
+
+# --- batch / coordinator -----------------------------------------------------
+parallel: 5
+tasks_per_round: 8
+actor_timeout: 7200

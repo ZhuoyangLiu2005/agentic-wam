@@ -25,5 +25,5 @@ export AGENTICWAM_NOISE_SEED="${AGENTICWAM_NOISE_SEED-1234}"
 export TORCHINDUCTOR_CACHE_DIR="$ROOT/.torchinductor_cache_deploy"
 CUDA_VISIBLE_DEVICES="${GPU:-0}" exec "${PYTHON:-python}" deploy/remote/server.py \
   --ckpt "$CKPT" --task "${TASK:-posttrain_yam}" --embodiment "${EMBODIMENT:-yam}" --dataset "$DATASET" \
-  --override "model.infer_code_tokens=${INFER_CODE_TOKENS:-64}" --instruction "$INSTR" \
+  --override "model.infer_code_tokens=${INFER_CODE_TOKENS:-128}" --instruction "$INSTR" \
   --num-inference-steps "${NIS:-6}" --replan-steps "${REPLAN:-24}" --port "${PORT:-8712}" "$@"

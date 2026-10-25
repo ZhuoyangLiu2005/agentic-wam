@@ -48,8 +48,13 @@ def _canonical(block, strip_comments):
 def assemble_flat_cache(per_episode_frame_codes, strip_comments=False):
     """episodes' per-frame block strings -> {codes(unique), code_id_by_idx(int32)}. Dedups by the
     (optionally comment-normalized) string."""
-    codes: list[str] = []
-    index: dict[str, int] = {}
+    # codes: list[str] = []
+    # index: dict[str, int] = {}
+    # Reserve id 0 for "" (no code), the convention of codegen/pretrain/build_code_cache_flat.py that
+    # dump_code_gt / preflight_sft / merge_datasets / build_subgoal_from_code read as "empty". Without
+    # it the first real block got id 0 and those tools reported it as missing.
+    codes: list[str] = [""]
+    index: dict[str, int] = {"": 0}
     ids: list[int] = []
     EMPTY = "def policy_chunk(obs, state, robot, skills):\n    return skills.visual_diff(obs, obs)\n"
     for frames in per_episode_frame_codes:

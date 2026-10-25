@@ -52,9 +52,10 @@ Examples: "reach for the deck", "grasp the card with the right hand",
 Reply with the label ONLY — no explanation, no quotes."""
 
 
-def spans_from_events(events_by_hand: dict, T: int, fps: float) -> list[tuple[int, int]]:
+def spans_from_events(events_by_hand: dict, T: int, fps: float,
+                      max_span_s: float = MAX_SPAN_S) -> list[tuple[int, int]]:
     """Merge both hands' contact transitions into ordered, hygiene-filtered spans."""
-    min_f, max_f = int(MIN_SPAN_S * fps), int(MAX_SPAN_S * fps)
+    min_f, max_f = int(MIN_SPAN_S * fps), int(max_span_s * fps)
     cuts = sorted({int(f) for ev in events_by_hand.values() for f, _ in ev})
 
     # MIN_SPAN_S must hold between NEIGHBOURING cuts, not merely against the episode ends.
@@ -97,6 +98,8 @@ def main():
     ap.add_argument("--episodes", type=int, default=0, help="0 = all")
     ap.add_argument("--dry-run", action="store_true", help="split only; no VLM calls")
     ap.add_argument("--workers", type=int, default=8, help="concurrent episodes (IO-bound)")
+    ap.add_argument("--max-span-s", type=float, default=MAX_SPAN_S,
+                    help="subdivide spans longer than this (seconds)")
     args = ap.parse_args()
 
     sys.path.insert(0, args.pipeline)
@@ -129,7 +132,7 @@ def main():
                    for f in TACTILE_FINGERS if f"{h}_{f}_f6" in mod}
                for h in ("left", "right")}
         ev, _ = tactile_hand_events(tac)
-        spans = spans_from_events(ev, T, fps)
+        spans = spans_from_events(ev, T, fps, args.max_span_s)
         instruction = e["tasks"][0] if e.get("tasks") else tasks.get(0, "")
 
         sub_id = np.zeros(T, dtype=np.int32)
