@@ -228,11 +228,14 @@ their own licenses.
 If you find AW-0 useful, please cite:
 
 ```bibtex
-@misc{aw0_2026,
-  title={Agentic World Action Models},
-  author={Zhuoyang Liu and Dantong Niu and Botong Zhang and Boning Shao and Jing Wang and Ruijie Zheng and Yuvan Sharma and Runyu Lu and Jiaming Liu and Renrui Zhang and Roei Herzig and Yutong Bai and Ken Goldberg and Danfei Xu and Yuke Zhu and Guanzhi Wang and Linxi Fan and Trevor Darrell},
-  year={2026},
-  url={https://agentic-wam.github.io/},
+@misc{liu2026agenticworldactionmodels,
+      title={Agentic World Action Models}, 
+      author={Zhuoyang Liu and Dantong Niu and Botong Zhang and Boning Shao and Jing Wang and Ruijie Zheng and Yuvan Sharma and Runyu Lu and Jiaming Liu and Renrui Zhang and Roei Herzig and Yutong Bai and Ken Goldberg and Danfei Xu and Yuke Zhu and Guanzhi Wang and Linxi "Jim" Fan and Trevor Darrell},
+      year={2026},
+      eprint={2610.30136},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2610.30136}, 
 }
 ```
 <!-- TODO: add the arXiv id (eprint / archivePrefix / primaryClass) once posted. -->
