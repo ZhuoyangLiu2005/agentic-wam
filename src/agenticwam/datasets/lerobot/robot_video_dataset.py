@@ -68,6 +68,7 @@ class RobotVideoDataset(torch.utils.data.Dataset):
         cycle_cache_path: Optional[str] = None,  # idx->cycle (which object) cache .pt
         code_slices_no_history: bool = False,  # ablation: omit completed-slice history from prompt
         code_slices_summary: bool = False,  # BOUNDED event log: "# Completed: k/n. Last: <slice>" (vs full transcript)
+        save_norm_stats: bool = True,  # shared pretraining persists one copy in runtime
     ):
         self.lerobot_dataset = BaseLerobotDataset(
             dataset_dirs=dataset_dirs,
@@ -169,7 +170,8 @@ class RobotVideoDataset(torch.utils.data.Dataset):
                     logger.info("Calculating dataset stats for normalization...")
                     dataset_stats = self.lerobot_dataset.get_dataset_stats(processor)
                     work_dir = misc.get_work_dir()
-                    save_dataset_stats_to_json(dataset_stats, os.path.join(work_dir, "dataset_stats.json"))
+                    if save_norm_stats:
+                        save_dataset_stats_to_json(dataset_stats, os.path.join(work_dir, "dataset_stats.json"))
                 else:
                     dataset_stats = None
                 if torch.distributed.is_available() and torch.distributed.is_initialized():
@@ -179,7 +181,7 @@ class RobotVideoDataset(torch.utils.data.Dataset):
             else:
                 dataset_stats = load_dataset_stats_from_json(pretrained_norm_stats)
                 logger.info(f"Using dataset stats: {pretrained_norm_stats}")
-                if PartialState().is_main_process:
+                if save_norm_stats and PartialState().is_main_process:
                     work_dir = misc.get_work_dir()
                     save_dataset_stats_to_json(dataset_stats, os.path.join(work_dir, "dataset_stats.json"))
 

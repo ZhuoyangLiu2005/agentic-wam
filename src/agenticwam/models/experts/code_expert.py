@@ -637,6 +637,29 @@ def _build_qwen_code_expert(
     return expert.to(device=device, dtype=torch_dtype)
 
 
+def _load_sdar_backbone(model_name, torch_dtype):
+    """Load SDAR's Qwen3 weights without its diffusion-training Python modules.
+
+    MoT uses the embeddings, projections, norms and MLPs only. The public SDAR
+    custom model imports FlashAttention RMSNorm and fused loss code even when
+    SDPA is requested; the standard Qwen3 modules have the same tensor layout.
+    """
+    from transformers import PretrainedConfig, Qwen3Config, Qwen3ForCausalLM
+
+    raw, _ = PretrainedConfig.get_config_dict(model_name)
+    for key in ("model_type", "architectures", "auto_map"):
+        raw.pop(key, None)
+    config = Qwen3Config.from_dict(raw)
+    model, loading = Qwen3ForCausalLM.from_pretrained(
+        model_name, config=config, torch_dtype=torch_dtype,
+        attn_implementation="sdpa", output_loading_info=True)
+    errors = {key: loading.get(key) for key in ("missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs")
+              if loading.get(key)}
+    if errors:
+        raise RuntimeError(f"SDAR weights do not match the Qwen3 backbone: {errors}")
+    return model
+
+
 def _build_sdar_code_expert(
     model_name: str,
     num_layers: int = 28,
@@ -659,10 +682,9 @@ def _build_sdar_code_expert(
     so map model.layers -> MoT CodeBlocks exactly as the Qwen builder, keep SDAR's embed/lm_head/
     norm + its native <|MASK|> token, and set code_objective='blockdiff'. Vision reaches the code
     via MoT joint attention (code->video), so no vision encoder is needed here."""
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoTokenizer
     logger.info("Loading SDAR code-expert backbone %s ...", model_name)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name, trust_remote_code=True, torch_dtype=torch_dtype, attn_implementation="sdpa")
+    model = _load_sdar_backbone(model_name, torch_dtype)
     text_model = model.model
     qwen_layers = text_model.layers
     hidden_dim = qwen_layers[0].self_attn.q_proj.in_features
@@ -687,7 +709,7 @@ def _build_sdar_code_expert(
     final_norm = text_model.norm
     lm_head = model.lm_head
     vocab_size = embed.num_embeddings
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=False)
     mask_id = getattr(tokenizer, "mask_token_id", None)
     expert = CodeExpert(
         blocks=blocks, embed_tokens=embed, final_norm=final_norm, lm_head=lm_head,

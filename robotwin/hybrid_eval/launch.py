@@ -41,7 +41,7 @@ def parse_args(argv=None):
     ap.add_argument("--task", required=True, help="a directory name under configs/robotwin/tasks/")
     ap.add_argument("--model", default="robotwin_hybrid", help="preset name under configs/robotwin/models/ or a yaml path")
     ap.add_argument("--step", type=int, default=None, help="checkpoint step under <run>/checkpoints/weights/")
-    ap.add_argument("--ckpt", default=None, help="explicit checkpoint path (overrides --model run / --step)")
+    ap.add_argument("--ckpt", default=None, help="explicit checkpoint path (default: preset's released checkpoint)")
     ap.add_argument("--mode", choices=["hybrid", "wam"], default="hybrid")
     ap.add_argument("--proto", default="demo_clean", help="RoboTwin task_config: demo_clean | demo_randomized")
     ap.add_argument("--seed", type=int, default=0)
@@ -60,7 +60,7 @@ def parse_args(argv=None):
     # Models trained on the RANDOMISED `seen` instruction pool (record_instructions=static, ~3 per
     # episode rotating by task_index) have no canonical primary, so no canonical rewrite is offered here. Evals default to `unseen`: this knob exists to measure that gap.
     ap.add_argument("--instruction-type", choices=["seen", "unseen"], default=None,
-                    help="EVALUATION.instruction_type; default leaves the config value (unseen)")
+                    help="EVALUATION.instruction_type; default uses the preset, then the simulator config")
     ap.add_argument("--no-vision", action="store_true", help="hybrid mode: assume the vision servers are up")
     ap.add_argument("--no-render", action="store_true",
                     help="disable rollout video writing (EVALUATION.eval_video_log=false)")
@@ -137,29 +137,18 @@ def plan(a):
     task = config.task(a.task, model) if assets else {"name": a.task, "short": a.task, "preamble": None,
                                                       "frozen": None, "gen_tokens": None}
     use_code = bool(model.get("use_code_expert", True))
-    ckpt = a.ckpt or (f"{model['run']}/checkpoints/weights/step_{a.step:06d}.pt" if a.step is not None else None)
-    if not ckpt:
-        sys.exit("give --step (with --model) or --ckpt")
-    if not Path(ckpt).is_file() and a.step is not None:
-        # The trainer keeps only the last few checkpoints under checkpoints/weights/ and
-        # hard-links the milestones (40k/80k/...) into <run>/milestones/. A long eval that
-        # names a milestone by --step therefore breaks part-way through: the weights/ copy is
-        # rotated away while training continues, and every job launched after that point dies
-        # here even though the file still exists one directory over. Fall back to the
-        # milestone copy instead of failing. (Cost of not having this: 3 jobs of the seen49
-        # run were lost in the window between 150k landing and the link being restored.)
-        alt = Path(model["run"]) / "milestones" / f"step_{a.step:06d}.pt"
-        if alt.is_file():
-            print(f"[launch] {ckpt} rotated away; using milestone copy {alt}")
-            ckpt = str(alt)
-    if not Path(ckpt).is_file():
-        sys.exit(f"no checkpoint: {ckpt}")
+    try:
+        ckpt = config.resolve_checkpoint(model, a.ckpt, a.step)
+    except (ValueError, FileNotFoundError) as exc:
+        sys.exit(str(exc))
     step = a.step if a.step is not None else (int(m.group(1)) if (m := re.search(r"step_(\d+)", ckpt)) else None)
     proto_short = a.proto.replace("demo_", "")
     tag = a.tag or f"{a.mode}_{task['short']}_{proto_short}_s{step}_seed{a.seed}"
     if assets:
-        gen_tokens = a.gen_tokens or measured_L(a.task, model["code_model"]) \
-            or task["gen_tokens"] or model["gen_tokens"]
+        # A fixed training canvas is a checkpoint property. Per-task lengths must
+        # not shrink the hybrid checkpoint's 124 slots (click_alarmclock's metadata says 72).
+        gen_tokens = a.gen_tokens or model.get("gen_tokens") \
+            or measured_L(a.task, model["code_model"]) or task["gen_tokens"]
     else:
         gen_tokens = a.gen_tokens or model.get("gen_tokens")
     # task["nis"] is DEPRECATED and deliberately not consulted. import_tasks.py derives it as
@@ -170,9 +159,11 @@ def plan(a):
     # (31..53 on the current corpus). Every run so far passed --nis explicitly and never hit it.
     nis = a.nis or model["nis"]
     replan = a.replan or model.get("replan", 24)
+    instruction_type = a.instruction_type or model.get("instruction_type")
     results_dir = REPO / "evaluate_results" / "robotwin" / ckpt_tag(ckpt) / f"{tag}_{a.task}_g0_s{a.seed}" / a.task
     env = dict(os.environ)
     env.update({
+        "TASK": a.task,
         "PATH": f"{site['python_bin']}:{env.get('PATH', '')}",
         "PYTHONPATH": f"{REPO / 'src'}:{env.get('PYTHONPATH', '')}",
         "VK_ICD_FILENAMES": site["vulkan_icd"],
@@ -186,11 +177,16 @@ def plan(a):
     })
     if assets:
         env.update({"AGENTICWAM_CODE_PREAMBLE_FILE": task["preamble"],
+                    "AGENTICWAM_HYBRID_TASKS": task["root"],
                     "AGENTICWAM_CODE_NO_HISTORY": str(model.get("no_history", 0))})
+    else:
+        env.pop("AGENTICWAM_CODE_PREAMBLE_FILE", None)
+        env.pop("AGENTICWAM_CODE_NO_HISTORY", None)
     if gen_tokens:
         env["AGENTICWAM_INFER_CODE_TOKENS"] = str(gen_tokens)
     # preset-level environment (instruction maps, skill prompts, decode knobs)
     env.update({k: str(v) for k, v in (model.get("env") or {}).items()})
+    env["AGENTICWAM_HYBRID"] = "1" if a.mode == "hybrid" else "0"
     if a.mode == "hybrid":
         env.update({
             "AGENTICWAM_HYBRID": "1", "AGENTICWAM_HYBRID_PERCEPTION": "1", "CAPX_USE_SAM3": "1",
@@ -220,7 +216,7 @@ def plan(a):
         f"EVALUATION.task_name={a.task}", f"EVALUATION.task_config={a.proto}",
         f"EVALUATION.eval_num_episodes={a.episodes}", f"task={model['eval_task']}",
         f"EVALUATION.num_inference_steps={nis}", f"EVALUATION.replan_steps={replan}",
-        *([f"EVALUATION.instruction_type={a.instruction_type}"] if a.instruction_type else []),
+        *([f"EVALUATION.instruction_type={instruction_type}"] if instruction_type else []),
         f"EVALUATION.output_dir=eval_shards/{tag}_{a.task}_g0_s{a.seed}",
         f"model.use_code_expert={'true' if use_code else 'false'}",
         *([f"model.code_model_name={model['code_model']}"] if use_code else []),
@@ -239,6 +235,12 @@ def plan(a):
             "seed": a.seed, "model": model["name"], "step": step, "ckpt": str(ckpt), "episodes": a.episodes,
             "gen_tokens": gen_tokens, "nis": nis, "replan": replan, "baseline": a.baseline,
             "use_code_expert": use_code, "eval_task": model["eval_task"],
+            "instruction_type": instruction_type,
+            "eval_preproc": env.get("AGENTICWAM_EVAL_PREPROC", "parity"),
+            "eval_preproc_crop": float(env.get("AGENTICWAM_EVAL_PREPROC_CROP", "0.95")),
+            "decode": {"conf_thresh": float(env.get("AGENTICWAM_CONF_THRESH", "0")),
+                       "reveal_cap": int(env.get("AGENTICWAM_REVEAL_CAP", "9999")),
+                       "nn_repair": env.get("AGENTICWAM_NN_REPAIR", "0") == "1"},
             "hybrid": {"perception": True, "perc_version": a.perc_version, "frame_every": a.frame_every,
                        "preamble": task["preamble"], "frozen": task["frozen"]} if a.mode == "hybrid" else None,
             "host": os.uname().nodename, "shard_gpu": a.shard_gpu, "started": None, "finished": None, "result": None}

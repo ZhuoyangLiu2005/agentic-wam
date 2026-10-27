@@ -1,8 +1,11 @@
 import logging
 import os
+import shutil
+import tempfile
 from pathlib import Path
 
 import torch
+from accelerate import PartialState
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 from omegaconf import OmegaConf
@@ -10,6 +13,7 @@ from omegaconf import OmegaConf
 from .trainer import AgenticWAMTrainer
 from .utils.logging_config import get_logger, setup_logging
 from .utils import misc
+from .datasets.lerobot.shared_stats import validate_shared_normalization
 
 logger = get_logger(__name__)
 
@@ -36,10 +40,26 @@ def _mixed_precision_to_model_dtype(mixed_precision: str) -> torch.dtype:
 
 
 def build_datasets(data_cfg: DictConfig):
+    shared_stats = validate_shared_normalization(data_cfg)
+    if shared_stats is not None and PartialState().is_main_process:
+        destination = Path(misc.get_work_dir()) / "dataset_stats.json"
+        if destination.resolve() != shared_stats:
+            temp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(dir=destination.parent, suffix=".tmp", delete=False) as f:
+                    temp_path = Path(f.name)
+                shutil.copyfile(shared_stats, temp_path)
+                os.replace(temp_path, destination)
+            finally:
+                if temp_path is not None:
+                    temp_path.unlink(missing_ok=True)
+        logger.info("All pretraining sources use shared normalization: %s", shared_stats)
     train_ds = instantiate(data_cfg.train)
     if data_cfg.get("val") is None:
         val_ds = train_ds
     else:
+        if shared_stats is not None:
+            return train_ds, instantiate(data_cfg.val)
         train_stats_path = data_cfg.train.get("pretrained_norm_stats")
         default_stats_path = os.path.join(misc.get_work_dir(), "dataset_stats.json")
         val_stats_path = data_cfg.val.get("pretrained_norm_stats")
@@ -62,6 +82,8 @@ def _resolve_train_device() -> str:
 
 
 def run_training(cfg: DictConfig):
+    # Reject missing or inconsistent shared stats before allocating the model.
+    validate_shared_normalization(cfg.data)
     setup_logging(
         log_level=logging.INFO,
         is_main_process=torch.distributed.get_rank() == 0 if torch.distributed.is_initialized() else True,

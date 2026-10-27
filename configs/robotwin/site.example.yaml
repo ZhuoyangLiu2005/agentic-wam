@@ -2,7 +2,7 @@
 # (robotwin/dataprep/prepare.py). Copy to site.yaml (git-ignored) and edit.
 # `${repo}` is the repository root (filled in by the loader); `${key}` references another key here.
 python_bin:      /path/to/conda/envs/agenticwam/bin            # env with agenticwam + RoboTwin deps; prepended to PATH
-agenticwam_root:    /path/to/AgenticWAM
+agenticwam_root: ${repo}
 robotwin_root:   ${aspire_root}/capsim/third_party/RoboTwin    # codegen/sim's RoboTwin checkout; env CAPX_ROBOTWIN_ROOT overrides
 aspire_root:     ${agenticwam_root}/codegen/sim               # capsim (RoboTwin API + vision servers); env AGENTICWAM_ASPIRE_ROOT overrides
 sim_dir:         ${aspire_root}                              # CWD + PYTHONPATH root of the vision servers
@@ -12,17 +12,15 @@ checkpoints_root: ${repo}/checkpoints                        # SDAR code model, 
 hf_cache_policy: ${checkpoints_root}/hf_cache                # Qwen3-VL tower + Cosmos-Reason1 (used offline)
 hf_cache_vision: /path/to/hf_cache                           # Molmo / SAM3 / GraspNet weights
 molmo_venv:      /path/to/venvs/molmo_vllm
-hf_token_file:   ${repo}/hf_api_key.txt                      # SAM3 server token (never commit)
+hf_token_file:   null                                       # optional legacy token file; HF_TOKEN / cached HF login also work
 vulkan_icd:      /etc/vulkan/icd.d/nvidia_icd.json
 ld_library_paths:                                            # FFmpeg 7 libs for torchcodec (see docs)
   - ${repo}/third_party/ffmpeg7-lib
 # 14-D joint normalisation stats; passed as EVALUATION.dataset_stats_path (needed when
 # --ckpt points outside a run dir, e.g. a checkpoint snapshot).
-dataset_stats:   /path/to/robotwin2.0/dataset_stats.json
+robotwin_release_dir: ${repo}/checkpoints/robotwin_release    # hf download miniFranka/agentic-wam-posttrain-robotwin-suit --local-dir checkpoints/robotwin_release
+dataset_stats:   ${robotwin_release_dir}/dataset_stats.json
 code_model:      ${checkpoints_root}/SDAR-1.7B-Chat                 # SDAR-1.7B code body (HF JetLM/SDAR-1.7B-Chat)
-robotwin_official_labels: /path/to/robotwin2.0_labels              # = paths.robotwin_official_labels
-robotwin_wam_run:    /path/to/runs/robotwin_wam/<RUN_ID>            # run dir (or released checkpoint dir) of each preset
-robotwin_hybrid_run: /path/to/runs/robotwin_hybrid/<RUN_ID>
 robotwin_cap_slices: /path/to/robotwin_cap_slices                   # = paths.robotwin_cap_slices (nn-repair slice corpus)
 diffsynth_model_base: ${agenticwam_root}/checkpoints
 ffmpeg:          ffmpeg                                      # rollout-viewer remux: a name on PATH or an absolute path
@@ -30,7 +28,8 @@ viewer_out:      ${repo}/runs/rollout_viewer                 # default rollout_v
 trace_dir:       ${repo}/runs/hybrid_traces                  # AGENTICWAM_TRACE files
 watch_log:       ${repo}/runs/hybrid_eval_watch.log          # one line per finished arm
 vision:                                                      # perception servers, all on 127.0.0.1
-  molmo:    {port: 8122, model: allenai/Molmo2-8B, gpu_util: 0.28, log: /tmp/molmo_hyb.log}
+  # Grounding uses one image per request; these bounds also limit vLLM profiling memory.
+  molmo:    {port: 8122, model: allenai/Molmo2-8B, gpu_util: 0.28, max_num_seqs: 1, limit_mm_per_prompt: {image: 1, video: 0}, log: /tmp/molmo_hyb.log}
   sam3:     {port: 8114, log: /tmp/sam3_hyb.log}
   graspnet: {port: 8115, log: /tmp/graspnet_hyb.log}
   ready_timeout_s: 900

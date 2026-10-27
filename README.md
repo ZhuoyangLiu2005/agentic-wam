@@ -71,6 +71,7 @@ expert** — `model.use_code_expert=false` builds the same model with the video 
 | Checkpoint | Stage | Notes |
 |---|---|---|
 | [`miniFranka/agentic-wam-pretrain-yamego3k-soup-e1`](https://huggingface.co/miniFranka/agentic-wam-pretrain-yamego3k-soup-e1) | Pretrain | Robot (`yam`) + egocentric human (`ego`) mixture, 1 epoch. **Start here to post-train on your own task** (`paths.pretrain_ckpt`). |
+| [`miniFranka/agentic-wam-posttrain-robotwin-suit`](https://huggingface.co/miniFranka/agentic-wam-posttrain-robotwin-suit) | RoboTwin SFT | WAM (200k) and hybrid (180k), shared 14-D stats and eval assets. [Setup and evaluation](docs/ROBOTWIN.md#released-checkpoints-one-time-setup-and-first-evaluation). |
 
 The checkpoint holds every trained weight. The frozen public components load from their own releases: the Wan2.2
 VAE ([`Wan-AI/Wan2.2-TI2V-5B`](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B)), the instruction encoder
@@ -174,19 +175,24 @@ Post-train the released checkpoint on your own task, then serve it on the robot.
 | Step | Command | What it does |
 |---|---|---|
 | **Train** | `bash scripts/train_robotwin.sh robotwin_wam` | 50 tasks, official demonstrations, 14-D joints (`robotwin_hybrid`: data collected with `codegen/sim`) |
-| **Benchmark** | `python robotwin/eval/benchmark.py --model robotwin_wam --ckpt <step.pt>` | every task × Easy / Hard, 100 episodes each, sharded over GPUs, resumable; `robotwin/eval/report.py` makes the tables |
-| **Hybrid eval** | `python robotwin/eval/benchmark.py --model robotwin_hybrid --ckpt <step.pt> --mode hybrid` | at every replan the generated code is either executed on the live simulator (through the cap-x API) or set aside for the WAM action head |
+| **Benchmark** | `python scripts/eval_robotwin_release.py wam` | released WAM checkpoint; every task × Easy / Hard, 100 episodes each, sharded over GPUs, resumable; start with `--tasks click_alarmclock --plan smoke --gpus 0` |
+| **Hybrid eval** | `python scripts/eval_robotwin_release.py hybrid --gpus 0 --vis-gpu 1` | released hybrid checkpoint; generated code executes through cap-x when accepted, with WAM fallback; checks/starts perception servers |
 
 [docs/ROBOTWIN.md](docs/ROBOTWIN.md) covers the simulator setup, data collection and every evaluation mode.
 
 ## Pretraining
 
 ```bash
-python scripts/launch_train.py --task pretrain_magic_soup --nproc 8 data.yam_root=<yam_root> data.ego_root=<ego_root>
+# Fit ONE normalizer jointly over the transformed training sources.
+PYTHONPATH=src python utils/make_stats.py --task pretrain_magic_soup \
+    data.yam_root=<yam_root> data.ego_root=<ego_root> data.shared_norm_stats=<mixture>/dataset_stats_eef64.json
+python scripts/launch_train.py --task pretrain_magic_soup --nproc 8 \
+    data.yam_root=<yam_root> data.ego_root=<ego_root> data.shared_norm_stats=<mixture>/dataset_stats_eef64.json
 ```
 
 Two sources in a standard LeRobot layout — `yam` (robot arms + grippers, 3 cameras) and `ego` (egocentric human hands,
-1 camera) — each with stats, instruction embeddings and per-frame code labels. From scratch the video expert starts
+1 camera) — each with instruction embeddings and per-frame code labels, using one shared normalization file
+computed jointly after their raw-to-64D transforms. From scratch the video expert starts
 from a Cosmos-Predict2.5-2B video checkpoint (not distributed); to continue from the AW-0 checkpoint instead, add
 `foundation_ckpt=<AW-0 checkpoint> model.load_pretrain=false`. [docs/PRETRAINING.md](docs/PRETRAINING.md) has the data
 format, the labeling pipeline and the configuration.

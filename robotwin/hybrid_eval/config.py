@@ -80,16 +80,46 @@ def model_preset(name_or_path, site_cfg=None):
     scope.update(site_cfg or site())
     m = _resolve(raw, scope)
     m["name"] = p.stem
-    m["run"] = str(REPO / m["run"]) if not os.path.isabs(m["run"]) else m["run"]
+    for key in ("run", "checkpoint", "task_assets_dir"):
+        if m.get(key):
+            p = Path(m[key]).expanduser()
+            m[key] = str(p if p.is_absolute() else REPO / p)
     return m
 
 
-def tasks_root():
-    return Path(os.environ.get("AGENTICWAM_HYBRID_TASKS") or CFG_DIR / "tasks")
+def resolve_checkpoint(model_cfg, checkpoint=None, step=None):
+    """Explicit weights > a training-run step > the preset's released checkpoint."""
+    if checkpoint:
+        p = Path(checkpoint).expanduser()
+    elif step is not None:
+        if not model_cfg.get("run"):
+            raise ValueError("--step requires a preset with a training run; use --ckpt for another checkpoint")
+        run = Path(model_cfg["run"])
+        p = run / "checkpoints" / "weights" / f"step_{step:06d}.pt"
+        milestone = run / "milestones" / p.name
+        if not p.is_file() and milestone.is_file():
+            p = milestone
+    elif model_cfg.get("checkpoint"):
+        p = Path(model_cfg["checkpoint"])
+    else:
+        raise ValueError("give --ckpt, --step with a training-run preset, or a preset with checkpoint:")
+    if not p.is_file():
+        raise FileNotFoundError(
+            f"no checkpoint: {p}\nDownload the release with:\n"
+            "  hf download miniFranka/agentic-wam-posttrain-robotwin-suit "
+            "--local-dir checkpoints/robotwin_release\n"
+            "or pass --ckpt and configure dataset_stats in site.yaml."
+        )
+    return str(p.resolve())
 
 
-def list_tasks():
-    return sorted(d.name for d in tasks_root().iterdir() if (d / "frozen_program.py").is_file())
+def tasks_root(model_cfg=None):
+    return Path(os.environ.get("AGENTICWAM_HYBRID_TASKS")
+                or (model_cfg or {}).get("task_assets_dir") or CFG_DIR / "tasks")
+
+
+def list_tasks(model_cfg=None):
+    return sorted(d.name for d in tasks_root(model_cfg).iterdir() if (d / "frozen_program.py").is_file())
 
 
 def load_task_yaml(name):
@@ -99,10 +129,12 @@ def load_task_yaml(name):
 
 def task(name, model_cfg=None):
     """Assets + per-task defaults for one task directory. Raises if the directory or a file is missing."""
-    d = tasks_root() / name
+    root = tasks_root(model_cfg)
+    d = root / name
     if not d.is_dir():
-        raise FileNotFoundError(f"task {name!r} has no directory under {tasks_root()} (known: {', '.join(list_tasks())})")
-    t = {"name": name, "dir": str(d), "preamble": str(d / "preamble.txt"), "frozen": str(d / "frozen_program.py")}
+        raise FileNotFoundError(f"task {name!r} has no directory under {root} (known: {', '.join(list_tasks(model_cfg))})")
+    t = {"name": name, "dir": str(d), "root": str(root),
+         "preamble": str(d / "preamble.txt"), "frozen": str(d / "frozen_program.py")}
     for k in ("preamble", "frozen"):
         if not Path(t[k]).is_file():
             raise FileNotFoundError(f"task {name}: missing {t[k]}")

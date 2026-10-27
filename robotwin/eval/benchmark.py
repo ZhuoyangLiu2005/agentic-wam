@@ -58,8 +58,12 @@ def job_result(job):
         r = (json.loads(p.read_text()).get("result") or {})
     except (OSError, ValueError):
         return None
+    if r.get("rc", 0) != 0:
+        return None
     if "success" in r and r.get("total"):
-        return int(r["success"]), int(r["total"])
+        success, total = int(r["success"]), int(r["total"])
+        if total == int(job.get("episodes", total)):
+            return success, total
     return None
 
 
@@ -106,7 +110,7 @@ def command(a, job, gpu):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", required=True, help="preset in configs/robotwin/models/ (or a yaml path)")
-    ap.add_argument("--ckpt", required=True, help="checkpoint .pt")
+    ap.add_argument("--ckpt", default=None, help="checkpoint .pt (default: model preset's released checkpoint)")
     ap.add_argument("--suite", default="robotwin", help="task suite in configs/robotwin/benchmark.yaml")
     ap.add_argument("--tasks", default=None, help="comma list; overrides --suite")
     ap.add_argument("--protocols", default="clean,randomized")
@@ -123,9 +127,10 @@ def main():
     ap.add_argument("--launch-args", nargs=argparse.REMAINDER, default=[],
                     help="everything after this is passed to launch.py verbatim")
     a = ap.parse_args()
-    a.ckpt = str(Path(a.ckpt).resolve())
-    if not Path(a.ckpt).is_file():
-        sys.exit(f"no checkpoint: {a.ckpt}")
+    try:
+        a.ckpt = config.resolve_checkpoint(config.model_preset(a.model), a.ckpt)
+    except (ValueError, FileNotFoundError) as exc:
+        sys.exit(str(exc))
     a.name = a.name or f"{Path(a.model).stem}_{Path(a.ckpt).stem}"
     bench = load_benchmark()
     jobs = build_jobs(a, bench)

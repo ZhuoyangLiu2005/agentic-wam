@@ -1,8 +1,9 @@
-# Model preset: robotwin_hybrid (codegen/sim-collected data, 50 tasks, 14-D joint, trained on
-# per-stage code slices; hybrid-capable). eval_task robotwin_hybrid carries code_canvas 124 and max_code_tokens 512,
-# the values it trains with. Pass --gen-tokens 124 too: launch.py's measured per-task canvas outranks this default.
-run:          ${robotwin_hybrid_run}
+# Released hybrid checkpoint: independent-stage codegen/sim data with appearance augmentation, 50 tasks, 14-D joints.
+checkpoint:   ${robotwin_release_dir}/hybrid/step_180000.pt
 eval_task:    robotwin_hybrid
+task_assets_dir: ${repo}/configs/robotwin/tasks_indep
+dataset_stats: ${dataset_stats}
+instruction_type: seen
 action_space: ""
 action_dim:   14
 proprio_dim:  14
@@ -11,3 +12,14 @@ no_history:   1
 gen_tokens:   124
 nis:          40
 replan:       24
+env:
+  AGENTICWAM_TASK_INSTRUCTION_MAP: ""
+  AGENTICWAM_TASK_SKILL_PROMPT: ""
+  AGENTICWAM_EVAL_PREPROC: parity_crop
+  AGENTICWAM_EVAL_PREPROC_CROP: "0.95"
+  AGENTICWAM_SKILL_PROMPT_ONLY: ""
+  AGENTICWAM_SLICE_MODE: ""
+  AGENTICWAM_SLICE_SUMMARY: ""
+  AGENTICWAM_CONF_THRESH: "0.5"
+  AGENTICWAM_REVEAL_CAP: "4"
+  AGENTICWAM_NN_REPAIR: "0"                    # generated code only; no private slice corpus is required

@@ -1,7 +1,7 @@
 """Evaluate one checkpoint on one RoboTwin task in one process (Hydra; root config configs/robotwin/sim_robotwin.yaml).
 
 Links `RoboTwin/policy/<EVALUATION.policy_name> -> robotwin/deploy` (default name `agenticwam_policy`; a link of that
-name pointing elsewhere is refused), then runs RoboTwin's official `script/eval_policy.py` with the config overrides
+name pointing elsewhere is refused), then runs RoboTwin's official `script/eval_policy.py` through the episode-count adapter with the config overrides
 and tees its log. robotwin/hybrid_eval/launch.py and robotwin/eval/benchmark.py build these calls for you.
 
 Example:
@@ -190,11 +190,12 @@ def main(cfg: DictConfig):
         _append_override(overrides, "code_model_name", _model_cfg.get("code_model_name", "mock"))
 
     cmd = [
-        sys.executable, "-u", "script/eval_policy.py",
+        sys.executable, "-u", str(PROJECT_ROOT / "robotwin" / "eval" / "robotwin_entry.py"),
         "--config", f"policy/{policy_name}/deploy_policy.yml",
         "--overrides", *overrides,
     ]
     env = os.environ.copy()
+    env["TASK"] = str(cfg.EVALUATION.task_name)  # per-task skill-prompt lookup inside the policy
     # AGENTICWAM_CUDA_VISIBLE_DEVICES selects the card(s) the eval subprocess sees;
     # gpu_id stays an int (hydra cannot parse "0,1").
     env["CUDA_VISIBLE_DEVICES"] = os.environ.get("AGENTICWAM_CUDA_VISIBLE_DEVICES", str(cfg.gpu_id))

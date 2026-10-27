@@ -26,7 +26,7 @@ recordings ──1──> LeRobot shards ──2──> stats ──3──> tex
 |---|---|---|---|
 | 1 | convert recordings | `<root>/train_shard_*/` | your converter (§1) |
 | 2a | LeRobot feature stats (v2.0 shards) | `train_shard_*/meta/stats.json` | `python utils/add_lerobot_stats.py --dst <root>` |
-| 2b | 64-D normalisation stats | `<root>/dataset_stats_eef64.json` | `PYTHONPATH=src python utils/make_stats.py --transform yam\|ego --dst <root>` |
+| 2b | shared 64-D normalisation stats (once for the mixture) | `<mixture>/dataset_stats_eef64.json` | `PYTHONPATH=src python utils/make_stats.py --task pretrain_magic_soup ...` (§2.1) |
 | 3 | instruction embeddings | `<root>/cosmos_text_embeds_cache/` | `python scripts/precompute_cosmos_text_embeds.py ...` |
 | 4 | code labels | `<root>/policy_code_idx.pt`, `<root>/episode_order.json` | `bash scripts/pretrain_annotation.sh <stage>` (§2.3) |
 | 5 | checks | — | `verify` stage, `DRY_RUN` of the launch (§2.4) |
@@ -37,7 +37,6 @@ A prepared source:
 ```
 <root>/
 ├── train_shard_0/ … train_shard_N/      one LeRobot v2.0/v2.1 dataset each (§1)
-├── dataset_stats_eef64.json             64-D normalisation stats of this source
 ├── cosmos_text_embeds_cache/            one text embedding per instruction
 ├── policy_code_idx.pt                   code label of every frame, in the loader's frame order
 └── episode_order.json                   that frame order
@@ -95,18 +94,46 @@ through the template `"A video recorded from a robot's point of view executing t
 
 ## 2. Preparing a source
 
-Run every step once per source root.
+Prepare shards, text embeddings and code labels per source. Compute normalization once over the complete training mixture.
 
 ### 2.1 Stats
 
 ```bash
 python utils/add_lerobot_stats.py --dst <root>                                  # v2.0 shards: meta/stats.json
-PYTHONPATH=src python utils/make_stats.py --transform yam --dst <yam_root>     # -> dataset_stats_eef64.json
-PYTHONPATH=src python utils/make_stats.py --transform ego --dst <ego_root>
+
+# One CPU pass over ALL configured training sources; no videos, VLM calls or GPUs.
+PYTHONPATH=src python utils/make_stats.py --task pretrain_magic_soup \
+    data.yam_root=<yam_root> data.ego_root=<ego_root> \
+    data.shared_norm_stats=<mixture>/dataset_stats_eef64.json
 ```
 
-Each source is normalised with its own stats (q01/q99, per step for actions). Blocks a source leaves at zero come out
-with `q01 == q99 == 0`; that is expected.
+**Shared normalization policy.** Transform each source's raw state/action into the common 64-D space first,
+then pool those values across the training mixture. Every source uses the resulting **same file and same scales**:
+global state statistics and horizon-specific action statistics (`q01/q99`, as before). The same physical value has
+the same normalized representation across sources. Compatible units, coordinate frames, hand conventions and
+action semantics remain part of the source-transform contract.
+
+The utility walks the actual `data.train` dataset tree, so new training sources participate without a hardcoded
+YAM/ego list. Each source must supply `dataset_dirs`, its processor's raw-to-64D transforms and a common action
+horizon. The pass respects explicit `episode_indices`, reads all `data/chunk-*/*.parquet` episodes, and keeps
+action windows inside episode boundaries. Use explicitly selected training data; implicit validation splits are
+rejected to avoid fitting statistics on held-out data.
+
+Statistics are **pooled before quantiles are computed**, never obtained by averaging source quantiles. All state
+frames contribute to exact moments/extrema; action-window starts use `--stride 5` by default (`--stride 1` for
+every valid start). To bound memory for large corpora, q01/q99 use a reproducible uniform reservoir of at most
+100,000 state frames and 100,000 action windows across the mixture (`--max-samples`, `--seed`). They are estimates
+when that limit is exceeded. Use `--max-samples 0` for exact pooled quantiles; this retains all transformed samples
+in memory. The output records source paths/transforms, counts and quantile settings.
+
+Pass `data.shared_norm_stats=<that file>` to training. Per-source stats overrides are rejected. Source constructors
+do not each write stats: the runtime saves one shared `dataset_stats.json` in the run directory, or reuses it if
+that is already the configured path. Every dimension stays in the pooled distribution, including zeros for slots
+an embodiment does not use; only dimensions constant across the entire mixture take the normalizer's constant-dim path.
+
+When adding a source for a **new run**, regenerate the shared file over the new complete mixture. Keep the stats
+fixed when resuming an existing run; changing them changes the model's action/state representation. The
+single-source `--dst ... --transform ...` utility remains available for post-training datasets.
 
 ### 2.2 Instruction embeddings
 
@@ -167,7 +194,7 @@ out of the loss. Trust `matched_raw_rate` and `repaired_share` from `stats`, not
 bash scripts/pretrain_annotation.sh verify --config configs/real_pre_train/data/pretrain_magic_soup.yaml \
     --source ego --dataset-root <ego_root> --order <ego_root>/episode_order.json      # cache order == loader order
 python utils/verify_instruction_embeds.py --dataset <root>                              # every instruction embedded
-python scripts/launch_train.py --task pretrain_magic_soup --dry-run data.yam_root=<yam_root> data.ego_root=<ego_root>
+python scripts/launch_train.py --task pretrain_magic_soup --dry-run data.yam_root=<yam_root> data.ego_root=<ego_root> data.shared_norm_stats=<mixture>/dataset_stats_eef64.json
 ```
 
 A code cache in the wrong frame order trains on the wrong labels with no error — rebuild it (`flatten`) whenever the
@@ -188,8 +215,9 @@ pretraining on your own sources from the released AW-0 checkpoint instead, start
 checkpoint: `foundation_ckpt=<AW-0 checkpoint> model.load_pretrain=false`. Either way the frozen VAE loads from
 `paths.wan_vae`.
 
-The data config takes two roots, `data.yam_root` and `data.ego_root`, and reads everything else from them (shards,
-stats, text cache, `policy_code_idx.pt`; `data.{yam,ego}_code_cache` override the cache path). `data.sources.yam` and
+The data config takes two roots, `data.yam_root` and `data.ego_root`, and reads shards, text cache and
+`policy_code_idx.pt` from them (`data.{yam,ego}_code_cache` override the cache path). `data.shared_norm_stats` is
+the required shared normalization file for all sources. `data.sources.yam` and
 `data.sources.ego` are two `RobotVideoDataset`s with their own transform; the training set is their
 `ConcatDataset`, wrapped in a `DeadlineDataset` (a slow read retries another index instead of stalling every GPU
 in the all-reduce). The mixture is proportional to frame counts; to re-weight, subsample a source's episodes or
@@ -211,11 +239,11 @@ export AGENTICWAM_CFG_DROPOUT=0.15,0.0                        # the recipe's cod
 
 ```bash
 # single node, 8 GPUs (smoke: max_steps=3 wandb.enabled=false)
-python scripts/launch_train.py --task pretrain_magic_soup --nproc 8 data.yam_root=<yam_root> data.ego_root=<ego_root>
+python scripts/launch_train.py --task pretrain_magic_soup --nproc 8 data.yam_root=<yam_root> data.ego_root=<ego_root> data.shared_norm_stats=<mixture>/dataset_stats_eef64.json
 
 # multi-node: the same command on every node, with the rendezvous in the environment
 RUN_ID=<run_name> NNODES=<N> NODE_RANK=<r> MASTER_ADDR=<host of rank 0> MASTER_PORT=<port> \
-  python scripts/launch_train.py --task pretrain_magic_soup --nproc 8 data.yam_root=<yam_root> data.ego_root=<ego_root>
+  python scripts/launch_train.py --task pretrain_magic_soup --nproc 8 data.yam_root=<yam_root> data.ego_root=<ego_root> data.shared_norm_stats=<mixture>/dataset_stats_eef64.json
 ```
 
 `--dry-run` prints the resolved accelerate command without starting anything.

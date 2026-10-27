@@ -223,6 +223,9 @@ class _CosmosTextEncoder:
         self.proc = AutoProcessor.from_pretrained("nvidia/Cosmos-Reason1-7B")
         self.device = device
         self.max_len = int(max_len)
+        # Optional for a policy sharing one GPU with the perception services.
+        # Embeddings are still computed on the policy GPU and cached there.
+        self.offload = _parse_bool(os.environ.get("AGENTICWAM_TEXT_OFFLOAD", "0"))
         self._cache: Dict[str, torch.Tensor] = {}
         # fail fast: a broken load yields a ~zero embedding that silently mis-conditions everything
         _probe = float(self.encode("pick up the object").std())
@@ -236,6 +239,8 @@ class _CosmosTextEncoder:
     def encode(self, prompt: str) -> torch.Tensor:
         if prompt in self._cache:
             return self._cache[prompt]
+        if self.offload:
+            self.qwen.to(self.device)
         conv = [
             {"role": "system", "content": [{"type": "text", "text": self._SYS}]},
             {"role": "user", "content": [{"type": "text", "text": prompt}]},
@@ -251,6 +256,10 @@ class _CosmosTextEncoder:
         emb = torch.cat([(h - h.mean(-1, keepdim=True)) / (h.std(-1, keepdim=True) + 1e-8)
                          for h in hs[1:]], dim=-1).detach()          # [1,L,100352]
         self._cache[prompt] = emb
+        if self.offload:
+            self.qwen.to("cpu")
+            if torch.device(self.device).type == "cuda":
+                torch.cuda.empty_cache()
         return emb
 
 
@@ -284,7 +293,7 @@ class AgenticWAMCosmosRobotWinPolicy:
         self._resize = ResizeSmallestSideAspectPreserving(args={"img_w": 320, "img_h": 224})
         self._crop = CenterCrop(args={"img_w": 320, "img_h": 224})
         self._norm = Normalize(args={"mean": 0.5, "std": 0.5})
-        # EVAL PREPROCESSING (docs/0917/training_plan_arm6_aug.md, Stage 0).
+        # EVAL PREPROCESSING: mirror the training full-frame transform before resizing.
         # The three transforms above replicate only STAGE 2 of the training pipeline
         # (robot_video_dataset.py: video_size=[224,320] resize -> centre crop -> [-1,1] norm).
         # STAGE 1 -- the processor's train_transforms on the FULL frame -- was never applied at eval.
@@ -514,6 +523,12 @@ class AgenticWAMCosmosRobotWinPolicy:
         elif os.environ.get("AGENTICWAM_SLICE_MODE"):
             _hist = getattr(self, "_mem_code_history", "") or ""
             code_instruction = ("# Instruction: %s\n# Completed:\n%s# Next:\n" % (instruction, _hist))
+        elif os.environ.get("AGENTICWAM_CODE_PREAMBLE_FILE"):
+            # Stage-slice training uses the raw task after '# Instruction:'.
+            # The model adds the helper-library/next-stage framing; only the
+            # video/action text encoder consumes DEFAULT_PROMPT's wrapper.
+            code_instruction = (episode_instruction if os.environ.get("AGENTICWAM_CODE_EPISODE_INSTR")
+                                else instruction)
         else:
             _base = (DEFAULT_PROMPT.format(task=episode_instruction)
                      if os.environ.get("AGENTICWAM_CODE_EPISODE_INSTR") else wrapped_instruction)
@@ -527,10 +542,8 @@ class AgenticWAMCosmosRobotWinPolicy:
                     obs_video=obs_video, proprio=proprio, prompt_embs=prompt_embs,
                     action_horizon=self.action_horizon, num_video_frames=self.num_video_frames,
                     num_inference_steps=self.num_inference_steps, sigma_shift=self.sigma_shift,
-                    # The code expert was TRAINED on the DEFAULT_PROMPT-wrapped string
-                    # (robot_video_dataset.py:293 -> agenticwam_model.py:482 -> code_expert.py:289).
-                    # Passing the raw instruction here made the prompt OOD and the code
-                    # task-blind (click_bell generated block-stacking code).
+                    # Composed above to match this checkpoint's training prompt:
+                    # skill + wrapped instruction, or raw task for stage slices.
                     instruction=code_instruction, code_cache=self.code_cache, return_video=want_video,
                 )
             else:

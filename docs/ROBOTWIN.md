@@ -517,9 +517,66 @@ Key overrides:
 
 ## 5. Evaluation — the RoboTwin benchmark
 
-RoboTwin's own `script/eval_policy.py` (SAPIEN, unchanged) runs each episode and calls the policy in
+### Released checkpoints: one-time setup and first evaluation
+
+The [RoboTwin checkpoint bundle](https://huggingface.co/miniFranka/agentic-wam-posttrain-robotwin-suit) contains
+`wam/step_200000.pt`, `hybrid/step_180000.pt`, one shared 14-D `dataset_stats.json`, the WAM
+`task_skill_prompt.json`, reference eval presets and a checksum manifest. Download it from the repository root:
+
+```bash
+hf download miniFranka/agentic-wam-posttrain-robotwin-suit --local-dir checkpoints/robotwin_release
+cp configs/robotwin/site.example.yaml configs/robotwin/site.yaml
+```
+
+Install the policy dependencies and public model components using [INSTALL.md](INSTALL.md), and set
+`paths.wan_vae`, `paths.text_encoder`, `paths.code_model` and `paths.code_vision` in `configs/paths/default.yaml`.
+Prepare RoboTwin and its assets as in §1; hybrid additionally needs the Molmo/SAM3/GraspNet environments from
+`codegen/sim/SETUP.md`. Edit `site.yaml` to select those installations (`python_bin`, `robotwin_root`,
+`checkpoints_root`, `hf_cache_policy`, Vulkan libraries and, for hybrid, the perception environments/caches).
+`robotwin_release_dir` already points at the download above; `code_model` must name the same SDAR directory
+as `paths.code_model`. Training data, code-label caches, foundation checkpoints and the private Cosmos video
+pretraining checkpoint are unnecessary for evaluation. Keep the packaged RoboTwin normalization statistics.
+
+Start with one episode of one task per scene setting:
+
+```bash
+python scripts/eval_robotwin_release.py wam --tasks click_alarmclock --plan smoke --gpus 0
+python scripts/eval_robotwin_release.py hybrid --tasks click_alarmclock --plan smoke --gpus 0 --vis-gpu 1
+```
+
+The wrapper starts/checks hybrid perception when `--vis-gpu` is supplied; `--vis-gpu-seg` can select a separate
+SAM3/GraspNet GPU. Without it, existing servers must be ready. Select policy GPUs separately with `--gpus`;
+reserve the vision GPU(s) when running multiple policy shards. `--dry-run` prints the benchmark plan without
+starting perception or simulation. Drop `--tasks ... --plan smoke` for the complete benchmark.
+
+Molmo defaults to one concurrent request and one image per prompt, matching the grounding client.
+`vision.molmo.max_num_seqs` and `vision.molmo.limit_mm_per_prompt` in `site.yaml` override these bounds.
+For a one-episode smoke test on a single H100 80 GB running both policy and perception, set
+`vision.molmo.gpu_util: 0.23` and use:
+
+```bash
+AGENTICWAM_TEXT_OFFLOAD=1 python scripts/eval_robotwin_release.py hybrid \
+  --tasks click_alarmclock --plan smoke --gpus 0 --vis-gpu 0
+```
+
+This computes each instruction embedding on the GPU, caches it, then moves the text encoder weights to CPU
+between instructions to leave room for SAM3 and GraspNet. The default keeps the encoder on the policy GPU.
+Use separate policy and perception GPUs for multi-episode benchmarks.
+
+The presets select the weights automatically; `--ckpt` overrides them. Both preserve each episode's instruction
+and default to the `seen` pool. To evaluate the `unseen` pool, append
+`--launch-args --instruction-type unseen` and give the benchmark a different `--name`.
+The WAM checkpoint uses 128 code slots, NIS 20 and replan 24; the hybrid checkpoint uses **124 fixed slots**, NIS 40 and replan 24, with no
+history and `tasks_indep` assets. Both use center-crop 0.95 followed by resize. The reference decode uses linear
+reveal for WAM and confidence 0.5 / reveal cap 4 for hybrid; NN repair is off, so no GT slice corpus is required.
+These are explicit reference recipes, not a claim that historical benchmark scores have been remeasured.
+Copy a preset to change its pinned environment/decode settings. `run_meta.json` records the effective recipe.
+
+RoboTwin's own `script/eval_policy.py` runs each episode and calls the policy in
 `robotwin/deploy/`. One process evaluates one task in one setting on one GPU; the benchmark runner splits the
-whole benchmark into such processes and schedules them. Kill leftover sim processes before starting (§8).
+whole benchmark into such processes and schedules them. `robotwin/eval/robotwin_entry.py` binds upstream's
+hard-coded episode count to the requested count in memory; the external simulator files stay unchanged.
+Kill leftover sim processes before starting (§8).
 
 ### 5.1 Benchmark a checkpoint — `robotwin/eval/benchmark.py`
 
@@ -575,6 +632,7 @@ A preset describes how to evaluate one checkpoint family; `--model` takes a name
 
 | key | meaning |
 |---|---|
+| `checkpoint` | default released checkpoint; `--ckpt` overrides |
 | `run` | the training run directory (`--step N` resolves `<run>/checkpoints/weights/step_N.pt`; `--ckpt` overrides) |
 | `eval_task` | the task config that builds the model at eval time |
 | `action_space`, `action_dim`, `proprio_dim` | `eef64` + 64, or `""` + 14 (§5.5) |
@@ -583,18 +641,20 @@ A preset describes how to evaluate one checkpoint family; `--model` takes a name
 | `nis`, `replan` | denoising steps; actions executed per replan |
 | `dataset_stats` | normalisation stats (else `site.yaml: dataset_stats`) |
 | `task_assets` | `true` (default): the code prompt comes from `configs/robotwin/tasks/<task>/` (models trained on `codegen/sim` data; required for hybrid). `false`: no task assets are used (models trained on the RoboTwin 2.0 dataset's caches) |
-| `gen_tokens`, `no_history` | code canvas and history mode (task-asset models) |
+| `task_assets_dir` | task family for this checkpoint (`tasks_indep` for the released hybrid checkpoint); explicit `AGENTICWAM_HYBRID_TASKS` overrides |
+| `gen_tokens`, `no_history` | code canvas and history mode; an explicit preset canvas outranks per-task measurements/metadata |
+| `instruction_type` | instruction pool; CLI `--instruction-type` overrides |
 | `env` | environment exported into the eval process: instruction maps, skill prompts, decode knobs |
 
 Shipped presets:
 
 | preset | checkpoint family |
 |---|---|
-| `robotwin_wam` | `robotwin_wam`; `run` = `robotwin_wam_run` in site.yaml |
-| `robotwin_hybrid` | `robotwin_hybrid` (hybrid-capable) |
+| `robotwin_wam` | official demos with appearance augmentation, step 200000; WAM execution |
+| `robotwin_hybrid` | independent-stage data with appearance augmentation, step 180000; WAM or hybrid execution |
 
-Their settings reproduce the runs' final RoboTwin evaluation (NIS 20, replan 24, instruction map, skill prompt). To
-evaluate another checkpoint, pass it with `--ckpt`; for another training config, copy a preset.
+The reference settings and setup are listed above. To evaluate another compatible checkpoint, pass it with
+`--ckpt`; for another training config or task family, copy a preset.
 
 ### 5.4 One task — `launch.py --mode wam` or `run_task.py`
 
@@ -711,7 +771,8 @@ frozen program's function definitions plus the preamble's stubs, and the API pri
 The hybrid channel needs a model trained on the code stream of the same programs it will execute: collect with
 `codegen/sim` (§2), build the configs with `robotwin/dataprep` (§3.1), train with `scripts/train_robotwin.sh` (§4). Point a
 model preset in `configs/robotwin/models/` at the run (`run`, `eval_task` = the training task config, action
-space, dims, code model, canvas). `robotwin_hybrid` is the reference preset and `launch.py`'s default.
+space, dims, code model, canvas). `robotwin_hybrid` is the reference preset and `launch.py`'s default; its released
+hybrid checkpoint selects `configs/robotwin/tasks_indep` automatically. Its 124-slot canvas is fixed across tasks.
 
 ### 6.4 Running
 
@@ -738,8 +799,9 @@ rollout mp4 (unless `--no-render`), `episode{N}_codes.jsonl`, `episode{N}_arbitr
 ### 6.5 Settings
 
 `launch.py` sets the plumbing itself (`AGENTICWAM_HYBRID`, `AGENTICWAM_HYBRID_TASKS`, `AGENTICWAM_FROZEN_PROGRAM`,
-`AGENTICWAM_CODE_PREAMBLE_FILE`, `AGENTICWAM_TRACE`, `AGENTICWAM_INFER_CODE_TOKENS`, ...). Export the following around the command to
-change behaviour:
+`AGENTICWAM_CODE_PREAMBLE_FILE`, `AGENTICWAM_TRACE`, `AGENTICWAM_INFER_CODE_TOKENS`, ...). Preset `env` values
+override the launching shell; copy/edit the preset to change pinned reference settings. Other environment
+settings can be exported around the command:
 
 | variable | default | effect |
 |---|---|---|

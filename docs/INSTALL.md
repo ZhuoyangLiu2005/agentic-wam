@@ -16,6 +16,8 @@ the model weights and the paths every config reads.
 | transformers | `>=4.57,<5` (Qwen3-VL) |
 
 The other pins (`accelerate`, `deepspeed`, `hydra-core`, `wandb`, …) are in `pyproject.toml`.
+SDAR weights load into the standard Qwen3 layers with PyTorch SDPA. Its custom diffusion-training modules,
+FlashAttention extension and fused loss kernels are not required by this loader.
 
 ## 2. Environment
 

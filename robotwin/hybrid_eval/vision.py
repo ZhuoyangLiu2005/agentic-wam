@@ -7,6 +7,7 @@
 launch.py calls ensure_up() before a hybrid arm; servers already listening are left alone.
 """
 import argparse
+import json
 import os
 import socket
 import subprocess
@@ -48,6 +49,10 @@ def start(site, gpu, gpu_seg=None, molmo_util=None, say=print):
                    PATH=f"{site['molmo_venv']}/bin:{os.environ.get('PATH', '')}")
         _spawn([f"{site['molmo_venv']}/bin/vllm", "serve", m["model"], "--port", str(m["port"]), "--host", "127.0.0.1",
                 "--trust-remote-code", "--max-model-len", "4096", "--max-num-batched-tokens", "4096",
+                # The grounding client sends one image at a time. Avoid profiling
+                # video inputs and a large concurrent batch that it never uses.
+                "--max-num-seqs", str(m.get("max_num_seqs", 1)),
+                "--limit-mm-per-prompt", json.dumps(m.get("limit_mm_per_prompt", {"image": 1, "video": 0})),
                 "--enforce-eager", "--gpu-memory-utilization", str(util)], Path.home(), env, m["log"])
     # [dataprep] the segmentation/grasp venv and the serving subdir are site-configurable
     # (the original layout hard-coded `.venv-libero/bin/python3` + `cap/serving/`; the
@@ -61,7 +66,12 @@ def start(site, gpu, gpu_seg=None, molmo_util=None, say=print):
         m = v["sam3"]
         say(f"starting SAM3 :{m['port']} on GPU {gpu_seg}")
         env = dict(os.environ, CUDA_VISIBLE_DEVICES=str(gpu_seg), HF_HOME=site["hf_cache_vision"],
-                   PYTHONPATH=_pp, HF_TOKEN=Path(site["hf_token_file"]).read_text().strip())
+                   PYTHONPATH=_pp)
+        # HF_TOKEN / the hub's cached login work without a separate plaintext key file.
+        # Retain the optional legacy file for sites that already use it.
+        token_file = site.get("hf_token_file")
+        if not env.get("HF_TOKEN") and token_file and Path(token_file).is_file():
+            env["HF_TOKEN"] = Path(token_file).read_text().strip()
         _spawn([seg_py, "-u", f"{serving}/launch_sam3_server.py", "--device", "cuda",
                 "--port", str(m["port"]), "--host", "127.0.0.1"], site["sim_dir"], env, m["log"])
     if not up["graspnet"]:
