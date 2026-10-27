@@ -3,7 +3,7 @@
 # 14-D joint actions, trained on per-stage code slices so its generated code can drive the robot in the hybrid
 # evaluation (docs/ROBOTWIN.md sections 2, 3, 6). Geometry: 3 nodes x 8 GPUs x batch 4 = 96.
 #   train:     bash scripts/train_robotwin.sh robotwin_hybrid
-#   evaluate:  python robotwin/eval/benchmark.py --model robotwin_hybrid --ckpt <step.pt> [--mode hybrid]
+#   evaluate:  python scripts/eval_robotwin_release.py hybrid --ckpt /path/to/hybrid.pt
 defaults:
   - override /data: robotwin_cap
   - override /model: agenticwam_cosmos

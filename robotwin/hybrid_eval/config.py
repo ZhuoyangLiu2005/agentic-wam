@@ -1,12 +1,7 @@
-"""Configuration for the hybrid eval. Three layers, all under configs/robotwin/:
+"""Machine paths, WAM/hybrid evaluation settings, and task assets.
 
-  site.yaml            machine-specific paths (git-ignored; template site.example.yaml)
-  models/<name>.yaml   which checkpoint family / policy settings to evaluate (project content)
-  tasks/<task>/        the task's assets: preamble.txt + frozen_program.py + task.yaml (discovered, never listed)
-
-`${key}` in a value refers to another key of the same file (or, for presets, of site.yaml);
-`${repo}` is the repository root. Env overrides: AGENTICWAM_HYBRID_SITE (site file), AGENTICWAM_HYBRID_TASKS
-(tasks root), CAPX_ROBOTWIN_ROOT / AGENTICWAM_ASPIRE_ROOT (the two roots the arbiter needs).
+Evaluation settings live in configs/robotwin/eval/{wam,hybrid}.yaml.
+`${key}` references site.yaml; `${repo}` is the repository root.
 """
 import os
 import re
@@ -65,44 +60,36 @@ def site():
     return s
 
 
-def model_preset(name_or_path, site_cfg=None):
-    """configs/robotwin/models/<name>.yaml (or any yaml path); `${key}` may name site keys."""
+def eval_config(name_or_path, site_cfg=None):
+    """Load configs/robotwin/eval/<name>.yaml or an explicit YAML path."""
     p = Path(name_or_path)
     if not p.suffix:
-        p = CFG_DIR / "models" / f"{name_or_path}.yaml"
+        p = CFG_DIR / "eval" / f"{name_or_path}.yaml"
     if not p.is_file():
-        known = sorted(x.stem for x in (CFG_DIR / "models").glob("*.yaml"))
-        raise FileNotFoundError(f"model preset not found: {p} (known: {', '.join(known)})")
+        known = sorted(x.stem for x in (CFG_DIR / "eval").glob("*.yaml"))
+        raise FileNotFoundError(f"evaluation config not found: {p} (known: {', '.join(known)})")
     raw = _load_yaml(p)
-    # site keys win: a preset key may share its name with the site key it references
+    # Site keys win: an evaluation key may share the name of a site reference
     # (`dataset_stats: ${dataset_stats}`), which would otherwise resolve to itself
     scope = dict(raw)
     scope.update(site_cfg or site())
     m = _resolve(raw, scope)
     m["name"] = p.stem
-    for key in ("run", "checkpoint", "task_assets_dir"):
+    for key in ("checkpoint", "task_assets_dir"):
         if m.get(key):
             p = Path(m[key]).expanduser()
             m[key] = str(p if p.is_absolute() else REPO / p)
     return m
 
 
-def resolve_checkpoint(model_cfg, checkpoint=None, step=None):
-    """Explicit weights > a training-run step > the preset's released checkpoint."""
+def resolve_checkpoint(model_cfg, checkpoint=None):
+    """Use an explicit checkpoint or the configured WAM/hybrid weights."""
     if checkpoint:
         p = Path(checkpoint).expanduser()
-    elif step is not None:
-        if not model_cfg.get("run"):
-            raise ValueError("--step requires a preset with a training run; use --ckpt for another checkpoint")
-        run = Path(model_cfg["run"])
-        p = run / "checkpoints" / "weights" / f"step_{step:06d}.pt"
-        milestone = run / "milestones" / p.name
-        if not p.is_file() and milestone.is_file():
-            p = milestone
     elif model_cfg.get("checkpoint"):
         p = Path(model_cfg["checkpoint"])
     else:
-        raise ValueError("give --ckpt, --step with a training-run preset, or a preset with checkpoint:")
+        raise ValueError("give --ckpt or set checkpoint in the evaluation config")
     if not p.is_file():
         raise FileNotFoundError(
             f"no checkpoint: {p}\nDownload the release with:\n"

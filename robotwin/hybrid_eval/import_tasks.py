@@ -3,7 +3,7 @@
     python robotwin/hybrid_eval/import_tasks.py --frozen-root codegen/sim/frozen [--tasks a b ...]
         [--out configs/robotwin/tasks]
 
---frozen-root reads the codegen/sim program handoff (docs/ROBOTWIN.md §2.7):
+--frozen-root reads the codegen/sim program handoff (docs/ROBOTWIN.md):
 frozen/<task>/{frozen_program.py, frozen_program.sha256, STAGE2_RESULT.md, task.yaml}. The program is the one
 the frozen task.yaml names; it is refused if its sha256 differs from the recorded one, and the Stage-2 result
 (clean/randomized/total, verdict, source) is taken from that task.yaml as recorded at freeze time.
@@ -36,7 +36,7 @@ TOKEN_MARGIN = 8       # tokens beyond the longest slice (end-of-text + a little
 TOKEN_ROUND = 8        # canvas sizes are kept to multiples of this
 # DEPRECATED (2026-09-16). `nis` reaches EVALUATION.num_inference_steps, which is the video/action
 # denoiser's step count -- unrelated to the code canvas this scales it by. The ratio came from one
-# preset that happened to pair nis 40 with a 96-token canvas; that coincidence is not a relation.
+# configuration that happened to pair nis 40 with a 96-token canvas; that coincidence is not a relation.
 # launch.py no longer reads the value; it is still written so the files stay diffable upstream.
 NIS_PER_TOKEN = 40 / 96
 

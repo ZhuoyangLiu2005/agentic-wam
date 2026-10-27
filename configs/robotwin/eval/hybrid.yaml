@@ -1,0 +1,19 @@
+# Evaluation settings for the released hybrid model.
+mode: hybrid
+checkpoint: ${robotwin_release_dir}/hybrid.pt
+eval_task: robotwin_hybrid
+dataset_stats: ${dataset_stats}
+code_model: ${code_model}
+action_space: ""
+action_dim: 14
+proprio_dim: 14
+task_assets_dir: ${repo}/configs/robotwin/tasks_indep
+instruction_type: seen
+num_inference_steps: 40
+replan_steps: 24
+code_tokens: 124
+no_history: true
+image_crop: 0.95
+decode:
+  confidence_threshold: 0.5
+  max_reveal_per_step: 4

@@ -6,7 +6,7 @@ description: "Launch, monitor and resume AgenticWAM downstream training: real-ro
 # Launch downstream training
 
 Guides: real robots [docs/REALWORLD.md](../../../docs/REALWORLD.md) §3, RoboTwin
-[docs/ROBOTWIN.md](../../../docs/ROBOTWIN.md) §4, multi-node and launch internals
+[docs/ROBOTWIN.md](../../../docs/ROBOTWIN.md), multi-node and launch internals
 [docs/PRETRAINING.md](../../../docs/PRETRAINING.md) §4. Entry points:
 
 | target | command |
@@ -80,6 +80,6 @@ step rate far below the first minutes, or a stalled log. Checkpoints land in
 ## After training
 
 * **YAM**: serve with `deploy/launch_server.sh` (REALWORLD.md §4; `INFER_CODE_TOKENS` = the training value).
-* **RoboTwin**: `python robotwin/eval/benchmark.py --model <preset> --ckpt <step.pt>` (ROBOTWIN.md §5; start with
+* **RoboTwin**: `python scripts/eval_robotwin_release.py wam --ckpt /path/to/wam.pt` (ROBOTWIN.md; start with
   `--plan smoke`). The eval links `robotwin/deploy` into the RoboTwin checkout as `EVALUATION.policy_name`; if another
   checkout already owns that link, give this one its own `EVALUATION.policy_name`.

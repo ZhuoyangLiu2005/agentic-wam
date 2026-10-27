@@ -61,16 +61,6 @@ def _resolve_dataset_stats_path(cfg: DictConfig, ckpt_path: Path) -> Path:
 
 
 def _resolve_ckpt_tag(ckpt_path: Path) -> str:
-    parts = ckpt_path.resolve().parts
-    if "runs" in parts:
-        runs_idx = parts.index("runs")
-        if runs_idx + 2 >= len(parts):
-            raise ValueError(f"`ckpt` under runs must follow .../runs/<task>/<date_dir>/..., got: {ckpt_path}")
-        task_name = parts[runs_idx + 1]
-        date_dir = parts[runs_idx + 2]
-        if task_name == "" or date_dir == "":
-            raise ValueError(f"`ckpt` under runs must follow .../runs/<task>/<date_dir>/..., got: {ckpt_path}")
-        return f"{task_name}_{date_dir}"
     return ckpt_path.stem
 
 

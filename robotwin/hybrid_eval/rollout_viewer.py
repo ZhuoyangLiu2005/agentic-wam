@@ -2,14 +2,14 @@
 """Rollout viewer for the RoboTwin hybrid evaluation (simulation only).
 
     python robotwin/hybrid_eval/rollout_viewer.py build [--results evaluate_results/robotwin] [--out DIR]
-        [--tag-prefix hybrid_] [--model robotwin_hybrid] [--step 15000] [--ffmpeg /path/ffmpeg]
+        [--tag-prefix hybrid_] [--config hybrid] [--ffmpeg /path/ffmpeg]
     python robotwin/hybrid_eval/rollout_viewer.py serve [--port 8428] [--dir DIR]
 
 `build` writes a static HTML viewer (index.html + view.html + data/ + videos/) from the runs `launch.py` wrote.
 Per episode: the rollout video, a channel strip (code vs WAM per frame, from episode{N}_frames.json; reconstructed
 from the arbitration log when absent), the generated code of the replan under the playhead (executed / rejected +
 reason), and the pure-WAM rollout of the SAME scene when a baseline run exists. A hybrid run's baseline is the
-`meta.baseline` tag if set, else the WAM run with the same (model, step, task, protocol, seed).
+`meta.baseline` tag if set, else the WAM run with the same (model, checkpoint, task, protocol, seed).
 
 Only RoboTwin simulation runs are read: a result directory needs the run_meta.json that launch.py writes, and that
 file must describe a sim run (`env: robotwin_sim`, or for runs launched before that field existed, a RoboTwin
@@ -143,7 +143,7 @@ def is_sim_run(m):
             and all(k in m for k in ("tag", "task", "seed")))
 
 
-def load_runs(results, tag_prefix=None, model=None, step=None):
+def load_runs(results, tag_prefix=None, model=None):
     runs, skipped = [], 0
     for mp in glob.glob(os.path.join(results, "*", "*", "*", "run_meta.json")):
         try:
@@ -159,8 +159,6 @@ def load_runs(results, tag_prefix=None, model=None, step=None):
             continue
         if model and m.get("model") != model:
             continue
-        if step and m.get("step") != step:
-            continue
         runs.append(m)
     if skipped:
         print(f"skipped {skipped} result dirs that are not RoboTwin simulation runs from launch.py")
@@ -173,7 +171,7 @@ def pair_baseline(run, runs):
             if r["tag"] == run["baseline"] and r["task"] == run["task"] and r["seed"] == run["seed"]:
                 return r
     for r in runs:
-        if r.get("mode") == "wam" and all(r.get(k) == run.get(k) for k in ("model", "step", "task", "proto", "seed")):
+        if r.get("mode") == "wam" and all(r.get(k) == run.get(k) for k in ("model", "ckpt", "task", "proto", "seed")):
             return r
     return None
 
@@ -196,7 +194,7 @@ select{font:13px system-ui;padding:3px;margin-bottom:10px}.note{color:#666;margi
 <script>
 const EPS=__EPS__;
 const batch=document.getElementById('batch'), proto=document.getElementById('proto'), tbl=document.getElementById('tbl');
-// one option per EVAL (model @ step, mode) - the run tag embeds the task name, so keying on it
+// one option per EVAL (model, mode) - the run tag embeds the task name, so keying on it
 // listed one entry per task instead of one per eval.
 // An ablation that reuses a checkpoint (dep-gate A/B, floor-gate re-run) must NOT land in
 // that checkpoint's eval bucket - it would inflate the episode count and skew AVERAGE.
@@ -205,7 +203,7 @@ const batch=document.getElementById('batch'), proto=document.getElementById('pro
 const famOf=e=>{const r=e.run||''; if(r.indexOf('hybrid_')===0) return '';
   const t=e.task||'', i=t?r.indexOf(t):-1; return i>0?r.slice(0,i).replace(/_+$/,''):r;};
 const evalKey=e=>{const f=famOf(e);
-  return (f?f+' \u00b7 ':'')+(e.model||'?')+' @ '+(e.step??'?')+(e.mode&&e.mode!=='hybrid'?' ['+e.mode+']':'');};
+  return (f?f+' \u00b7 ':'')+(e.model||'?')+(e.mode&&e.mode!=='hybrid'?' ['+e.mode+']':'');};
 const EV=[...new Set(EPS.map(evalKey))].sort();
 [['ALL','all evals ('+EPS.length+' eps)'],...EV.map(k=>[k,k+' — '+EPS.filter(e=>evalKey(e)===k).length+' eps'])]
   .forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;batch.appendChild(o);});
@@ -256,15 +254,15 @@ function render(){
  const r=batch.value, pf=proto.value;
  const L=EPS.filter(e=>(r==='ALL'||evalKey(e)===r)&&(pf==='ALL'||e.proto===pf)), groups={};
  if(!L.length){tbl.innerHTML='<div class=note>no episodes for this combination</div>';return;}
- // Rows are keyed by the three columns that identify them -- task, protocol, model @ step --
+ // Rows are keyed by the three columns that identify them -- task, protocol, model --
  // and nothing else. Per-seed tags (..._s1 ... _s7) used to split one eval into seven rows whose
  // percentages each covered a seventh of the episodes; they now pool into one. The key uses
- // evalKey, not a bare model+step, so an ablation that reuses a checkpoint (depgate_on/off,
+ // evalKey, not a bare model, so an ablation that reuses a checkpoint (depgate_on/off,
  // floorgate) keeps its own row in the ALL view instead of being pooled into that checkpoint's
- // baseline -- and the model @ step cell prints the same family prefix, so each row is keyed by
+ // baseline -- and the model cell prints the same family prefix, so each row is keyed by
  // exactly what it displays. Runs that land in one key merge; the run cell then counts them.
  L.forEach(e=>{const g=e.task+'|'+e.proto+'|'+evalKey(e);(groups[g]=groups[g]||[]).push(e);});
- let h='<table style="margin-bottom:10px"><tr><th>task</th><th>protocol</th><th>model @ step</th><th>runs</th><th>eps</th><th>pure-WAM same scenes</th><th>hybrid success</th><th>stages driven by code</th><th>code physical time (eps w/ code)</th><th>code time on rescued (WAM❌→✅)</th></tr>';
+ let h='<table style="margin-bottom:10px"><tr><th>task</th><th>protocol</th><th>model</th><th>runs</th><th>eps</th><th>pure-WAM same scenes</th><th>hybrid success</th><th>stages driven by code</th><th>code physical time (eps w/ code)</th><th>code time on rescued (WAM❌→✅)</th></tr>';
  Object.keys(groups).sort().forEach(g=>{const T=groups[g], S=succ(T);
   const bn=T.filter(e=>e.base!==null&&e.base!==undefined).length, bo=T.filter(e=>e.base===true).length;
   const cd=T.reduce((a,e)=>a+e.cstg,0), dd=T.reduce((a,e)=>a+e.nstg,0), ce=T.reduce((a,e)=>a+(e.estg||0),0);
@@ -427,7 +425,7 @@ def build(a):
     if not ffmpeg:
         print("ffmpeg not found: videos will be symlinked (no +faststart remux)")
     os.makedirs(os.path.join(out, "data"), exist_ok=True); os.makedirs(os.path.join(out, "videos"), exist_ok=True)
-    runs = load_runs(a.results, a.tag_prefix, a.model, a.step)
+    runs = load_runs(a.results, a.tag_prefix, a.model)
     hybrids = [r for r in runs if r.get("mode") == "hybrid"]
     eps = []
     for run in hybrids:
@@ -462,7 +460,7 @@ def build(a):
                         "run": run["tag"], "video": bool(src), "wam": wam_video,
                         "mode": run.get("mode", "hybrid"),
                         "task": run["task"], "proto": run["proto"].replace("demo_", ""), "model": run.get("model"),
-                        "step": run.get("step"), "seed": run["seed"], "ep": i, "base": base_ok,
+                        "seed": run["seed"], "ep": i, "base": base_ok,
                         "ndec": data["n_dec"], "ncdec": data["n_code_dec"], "frames": data["total"],
                         "nstg": data.get("n_stages", 0), "cstg": data.get("code_stages", 0),
                         "estg": data.get("err_stages", 0),
@@ -508,8 +506,7 @@ def main():
     b.add_argument("--out", default=None, help="default: site.yaml viewer_out")
     b.add_argument("--ffmpeg", default=None, help="default: site.yaml ffmpeg (name on PATH or absolute path)")
     b.add_argument("--tag-prefix", default=None, help="only hybrid runs whose tag starts with this")
-    b.add_argument("--model", default=None)
-    b.add_argument("--step", type=int, default=None)
+    b.add_argument("--config", dest="model", default=None)
     s = sub.add_parser("serve", help="serve a built viewer with HTTP Range (mp4 seeking)")
     s.add_argument("--port", type=int, default=8428)
     s.add_argument("--dir", default=None, help="default: site.yaml viewer_out")

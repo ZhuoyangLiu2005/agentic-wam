@@ -2,7 +2,7 @@
 
 How to turn real-robot recordings into a dataset AgenticWAM can post-train on: the steps in order, what each one
 produces, and the format the trainer expects. Other data lives with its pipeline — pretraining (yam robot + ego human video):
-[PRETRAINING.md](PRETRAINING.md) §1–2; RoboTwin simulation: [ROBOTWIN.md](ROBOTWIN.md) §2–3.
+[PRETRAINING.md](PRETRAINING.md) §1–2; RoboTwin simulation: [ROBOTWIN.md](ROBOTWIN.md)
 
 ## 0. Overview
 

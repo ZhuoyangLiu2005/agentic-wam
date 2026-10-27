@@ -1,23 +1,9 @@
 #!/usr/bin/env python3
-"""Evaluate one checkpoint on the RoboTwin 2.0 benchmark: every task of a suite, in both settings, sharded
-over the GPUs of this node, resumable, then a results table.
+"""Evaluate WAM or hybrid on RoboTwin tasks with resumable GPU shards.
 
-    python robotwin/eval/benchmark.py --model robotwin_wam --ckpt <step.pt> \\
-        [--suite robotwin] [--protocols clean,randomized] [--plan standard | smoke] \\
-        [--tasks a,b,...] [--gpus 0,1,2,3,4,5,6,7] [--per-gpu 1] [--mode wam | hybrid] [--name NAME] \\
-        [--episodes N --shards S] [--retries 1] [--render] [--dry-run]
+    python robotwin/eval/benchmark.py --config wam --tasks click_alarmclock --plan smoke --gpus 0
 
-What runs:
-  * suites / protocols / plans come from configs/robotwin/benchmark.yaml; the checkpoint family's settings (eval
-    task config, action space, decode, env) from a preset in configs/robotwin/models/.
-  * one job = (task, protocol, shard). Shard k evaluates ceil(N/S) episodes with RoboTwin seed seed_base + k, through
-    robotwin/hybrid_eval/launch.py (which writes run_meta.json with the result beside the rollouts).
-  * jobs are scheduled on --gpus (--per-gpu at a time on each); a finished job (run_meta with a result) is skipped,
-    so rerunning the same command resumes; a job that fails is retried --retries times.
-  * the manifest, per-job logs and the report go to evaluate_results/robotwin_benchmark/<name>/.
-
-Hybrid mode (generated code x WAM) needs a preset with task assets and the vision servers already running
-(robotwin/hybrid_eval/vision.py start); its runs are also browsable with robotwin/hybrid_eval/rollout_viewer.py.
+Evaluation settings are in configs/robotwin/eval/{wam,hybrid}.yaml; machine paths are in site.yaml.
 """
 import argparse
 import json
@@ -97,7 +83,7 @@ def build_jobs(a, bench):
 
 
 def command(a, job, gpu):
-    cmd = [sys.executable, str(LAUNCH), "--mode", a.mode, "--model", a.model, "--ckpt", a.ckpt,
+    cmd = [sys.executable, str(LAUNCH), "--mode", a.mode, "--config", a.config, "--ckpt", a.ckpt,
            "--task", job["task"], "--proto", job["task_config"], "--seed", str(job["seed"]),
            "--episodes", str(job["episodes"]), "--shard-gpu", str(gpu), "--tag", job["tag"]]
     if not a.render:
@@ -109,8 +95,8 @@ def command(a, job, gpu):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--model", required=True, help="preset in configs/robotwin/models/ (or a yaml path)")
-    ap.add_argument("--ckpt", default=None, help="checkpoint .pt (default: model preset's released checkpoint)")
+    ap.add_argument("--config", required=True, help="wam, hybrid, or an evaluation YAML path")
+    ap.add_argument("--ckpt", default=None, help="checkpoint .pt (default: evaluation config checkpoint)")
     ap.add_argument("--suite", default="robotwin", help="task suite in configs/robotwin/benchmark.yaml")
     ap.add_argument("--tasks", default=None, help="comma list; overrides --suite")
     ap.add_argument("--protocols", default="clean,randomized")
@@ -119,8 +105,8 @@ def main():
     ap.add_argument("--shards", type=int, default=None, help="processes per task and protocol (overrides the plan)")
     ap.add_argument("--gpus", default="0,1,2,3,4,5,6,7")
     ap.add_argument("--per-gpu", type=int, default=1, help="concurrent jobs per GPU")
-    ap.add_argument("--mode", choices=["wam", "hybrid"], default="wam")
-    ap.add_argument("--name", default=None, help="default: <model>_<checkpoint stem>")
+    ap.add_argument("--mode", choices=["wam", "hybrid"], default=None)
+    ap.add_argument("--name", default=None, help="default: evaluation config name")
     ap.add_argument("--retries", type=int, default=1)
     ap.add_argument("--render", action="store_true", help="write rollout videos (off by default: disk)")
     ap.add_argument("--dry-run", action="store_true", help="print the job plan and the first commands")
@@ -128,14 +114,16 @@ def main():
                     help="everything after this is passed to launch.py verbatim")
     a = ap.parse_args()
     try:
-        a.ckpt = config.resolve_checkpoint(config.model_preset(a.model), a.ckpt)
+        settings = config.eval_config(a.config)
+        a.ckpt = config.resolve_checkpoint(settings, a.ckpt)
+        a.mode = a.mode or settings["mode"]
     except (ValueError, FileNotFoundError) as exc:
         sys.exit(str(exc))
-    a.name = a.name or f"{Path(a.model).stem}_{Path(a.ckpt).stem}"
+    a.name = a.name or Path(a.config).stem
     bench = load_benchmark()
     jobs = build_jobs(a, bench)
     out = BENCH_ROOT / a.name
-    manifest = {"name": a.name, "model": a.model, "ckpt": a.ckpt, "mode": a.mode, "suite": a.suite,
+    manifest = {"name": a.name, "model": settings["name"], "ckpt": a.ckpt, "mode": a.mode, "suite": a.suite,
                 "tasks": sorted({j["task"] for j in jobs}), "protocols": a.protocols.split(","), "plan": a.plan,
                 "created": datetime.now().isoformat(timespec="seconds"), "jobs": jobs}
     old = out / "manifest.json"

@@ -41,7 +41,7 @@ codegen_sim_preflight
 | `capsim/` | Shared simulation, robot APIs, tracing, model client and data conversion |
 | `frozen/`, `outputs/` | Generated handoffs and run artifacts; git-ignored |
 
-See [ROBOTWIN.md §2](../../docs/ROBOTWIN.md) for the scripts and what each stage hands over.
+See [ROBOTWIN.md](../../docs/ROBOTWIN.md) for the scripts and what each stage hands over.
 
 ## Documentation
 

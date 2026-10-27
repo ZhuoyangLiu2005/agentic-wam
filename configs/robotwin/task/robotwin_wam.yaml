@@ -3,7 +3,7 @@
 # 14-D joint actions (docs/ROBOTWIN.md section 4);
 # no CFG stream dropout (train_robotwin.sh leaves AGENTICWAM_CFG_DROPOUT unset).
 #   train:     bash scripts/train_robotwin.sh robotwin_wam
-#   evaluate:  python robotwin/eval/benchmark.py --model robotwin_wam --ckpt <step.pt>
+#   evaluate:  python scripts/eval_robotwin_release.py wam --ckpt /path/to/wam.pt
 defaults:
   - override /data: robotwin_official
   - override /model: agenticwam_cosmos

@@ -29,7 +29,7 @@ pip install -e .                     # from the repository root
 export PYTHONPATH=$PWD/src:${PYTHONPATH:-}     # also what the training scripts set
 ```
 
-RoboTwin simulation and the `codegen/sim` perception servers need their own setup: [ROBOTWIN.md](ROBOTWIN.md) §1.
+RoboTwin simulation and the `codegen/sim` perception servers need their own setup: [ROBOTWIN.md](ROBOTWIN.md)
 The real-robot model server needs only this environment: [REALWORLD.md](REALWORLD.md) §4.
 
 ## 3. Weights and paths
@@ -45,10 +45,10 @@ Every machine-specific location lives in one file, `configs/paths/default.yaml`;
 | `code_vision` | the code expert's frozen vision tower | Hugging Face `Qwen/Qwen3-VL-2B-Instruct` |
 | `pretrain_ckpt` | the AW-0 pretrained checkpoint: the start of real-robot post-training | the release ([README](../README.md#model-weights)) or your own pretraining run |
 | `cosmos_ckpt` | pretraining **from scratch** only: a Cosmos-Predict2.5-2B video checkpoint (`model-*-of-*.safetensors`) the video expert starts from | not distributed ([PRETRAINING.md](PRETRAINING.md) §3) |
-| `robotwin_wam_init_ckpt`, `robotwin_hybrid_init_ckpt` | the weights RoboTwin training starts from | a pretraining checkpoint or a released one ([ROBOTWIN.md](ROBOTWIN.md) §4) |
-| `robotwin_root` | a RoboTwin 2.0 checkout (simulator, assets, eval scripts) | [ROBOTWIN.md](ROBOTWIN.md) §1 |
-| `robotwin_official`, `robotwin_official_labels` | the official RoboTwin 2.0 demonstrations and their code labels | [ROBOTWIN.md](ROBOTWIN.md) §3.3 |
-| `robotwin_cap`, `robotwin_cap_slices` | data collected with `codegen/sim`, and its stage slices | [ROBOTWIN.md](ROBOTWIN.md) §2–3 |
+| `robotwin_wam_init_ckpt`, `robotwin_hybrid_init_ckpt` | the weights RoboTwin training starts from | a pretraining checkpoint or a released one ([ROBOTWIN.md](ROBOTWIN.md)) |
+| `robotwin_root` | a RoboTwin 2.0 checkout (simulator, assets, eval scripts) | [ROBOTWIN.md](ROBOTWIN.md) |
+| `robotwin_official`, `robotwin_official_labels` | the official RoboTwin 2.0 demonstrations and their code labels | [ROBOTWIN.md](ROBOTWIN.md) |
+| `robotwin_cap`, `robotwin_cap_slices` | data collected with `codegen/sim`, and its stage slices | [ROBOTWIN.md](ROBOTWIN.md) |
 
 ```bash
 huggingface-cli download Wan-AI/Wan2.2-TI2V-5B Wan2.2_VAE.pth --local-dir /data/weights/Wan2.2-TI2V-5B
@@ -68,7 +68,7 @@ Only the keys a run uses need real values: real-robot post-training reads `wan_v
 and `pretrain_ckpt`; a `DRY_RUN=1` of the train scripts reports any path that does not exist. Tools outside Hydra
 (`scripts/precompute_cosmos_text_embeds.py`, `robotwin/dataprep/text_cache.py`) default to `text_encoder` from the same
 file. RoboTwin evaluation and data preparation read a second, machine-specific file, `configs/robotwin/site.yaml`
-(copied from `site.example.yaml`; [ROBOTWIN.md](ROBOTWIN.md) §1).
+(copied from `site.example.yaml`; [ROBOTWIN.md](ROBOTWIN.md)).
 
 ## 4. Environment variables
 
@@ -111,7 +111,7 @@ modules and the loss.
 | a path under `/path/to/...` in an error | a `paths.*` key is still the placeholder (§3) |
 | Hugging Face tries the network on an offline node | set `HF_HOME` and `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1` |
 | `torch.compile` / Dynamo errors | the train scripts set `TORCHDYNAMO_DISABLE=1 TORCH_COMPILE_DISABLE=1`; set them when calling `scripts/launch_train.py` directly |
-| RoboTwin eval crashes in Vulkan / cuRobo | the simulator needs Vulkan and cuRobo; [ROBOTWIN.md](ROBOTWIN.md) §1 and §5.2 |
+| RoboTwin eval crashes in Vulkan / cuRobo | the simulator needs Vulkan and cuRobo; [ROBOTWIN.md](ROBOTWIN.md#setup) |
 | intermittent multi-GPU "illegal memory access" | usually a node left in a bad state by another job; retry on a clean node first |
 
 ## 7. Next

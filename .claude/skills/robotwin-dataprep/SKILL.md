@@ -5,7 +5,7 @@ description: "Turn RoboTwin data into a launchable AgenticWAM training config: c
 
 # RoboTwin data preparation
 
-The guide is [docs/ROBOTWIN.md](../../../docs/ROBOTWIN.md) §3. Collection itself (writing, validating, freezing a
+The guide is [docs/ROBOTWIN.md](../../../docs/ROBOTWIN.md) Collection itself (writing, validating, freezing a
 program and collecting demonstrations) is the `robotwin-collect` skill and §2. Run everything here from the repository
 root in the **AgenticWAM** environment (not `codegen-sim`), with `PYTHONPATH=<repo>/src` first.
 
@@ -50,15 +50,15 @@ present. Re-run it alone with `python robotwin/dataprep/smoke.py configs/robotwi
 ## Route B — the official dataset
 
 The `robotwin_wam` recipe reads `paths.robotwin_official` (`robotwin2.0/` LeRobot set + `dataset_stats.json`) and
-`paths.robotwin_official_labels` (code labels, prompts, text embeddings; layout in ROBOTWIN.md §3.3). Nothing is
+`paths.robotwin_official_labels` (code labels, prompts, text embeddings; layout in ROBOTWIN.md). Nothing is
 generated here: check both paths exist in the paths file, then `DRY_RUN=1 bash scripts/train_robotwin.sh robotwin_wam`.
-Rebuild only the text embeddings if they are missing (ROBOTWIN.md §3.3, `scripts/precompute_cosmos_text_embeds.py`).
+Rebuild only the text embeddings if they are missing (ROBOTWIN.md, `scripts/precompute_cosmos_text_embeds.py`).
 The official code labels are frozen artifacts and cannot be regenerated from this repository.
 
 ## Rules
 
 * Never hand-edit `slices_ep/` or `cycle_by_idx.pt`; regenerate them with `robotwin/dataprep/slicing.py build`
-  (ROBOTWIN.md §3.2) or by re-collecting.
+  (ROBOTWIN.md) or by re-collecting.
 * A stage-slice cache belongs to the program it was cut from: after re-freezing a program, re-collect or rebuild.
 * Do not commit generated `configs/robotwin/{data,task}/<name>.yaml` unless the user asks; they name local paths.
 

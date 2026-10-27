@@ -8,7 +8,7 @@ what the dataset must look like, the two ways to produce labels, and how to wire
 ```
 codegen/
 ├── sim/        RoboTwin: write and validate programs, then collect demonstrations with per-motion code
-│               provenance (ROBOTWIN.md §2; module setup in codegen/sim/SETUP.md)
+│               provenance (ROBOTWIN.md; module setup in codegen/sim/SETUP.md)
 ├── pretrain/   the VLM labeling engine (pipeline/) and the frozen skill libraries (skill_library/)
 └── posttrain/  tools that take a real-robot SFT dataset through labeling: sub-task splits, the bridge
                 from engine outputs to a training-order cache, merging, alignment checks, label dumps
@@ -266,5 +266,5 @@ libraries and flattened with `codegen/pretrain/build_code_cache_flat.py`; the co
 
 RoboTwin labels come from `codegen/sim`: write and validate a task program (Stage A), then execute it to collect
 demonstrations whose every motion records the program line that produced it (Stage B). The whole simulation
-pipeline is [ROBOTWIN.md](ROBOTWIN.md): §2 collection, §3 training data and stage slicing, §6 the hybrid evaluation
+pipeline is [ROBOTWIN.md](ROBOTWIN.md): data collection, training data and stage slicing, and hybrid evaluation
 that executes the same frozen programs.

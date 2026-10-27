@@ -87,7 +87,7 @@ output_dir=/tmp/agenticwam_smoke`. The log must show the foundation transfer and
 ## Simulation and labeling environments (only if asked)
 
 * **RoboTwin evaluation**: a RoboTwin 2.0 checkout with Vulkan + cuRobo, and `configs/robotwin/site.yaml` copied from
-  `site.example.yaml` — [docs/ROBOTWIN.md](../../../docs/ROBOTWIN.md) §1.1. `vulkaninfo --summary` must list the NVIDIA GPU.
+  `site.example.yaml` — [docs/ROBOTWIN.md](../../../docs/ROBOTWIN.md) `vulkaninfo --summary` must list the NVIDIA GPU.
 * **RoboTwin data collection** (`codegen/sim`): its own conda environments — follow `codegen/sim/SETUP.md` and finish with
   `source env.sh && codegen_sim_preflight` from `codegen/sim`.
 * **Code labeling**: `pip install -r codegen/pretrain/pipeline/requirements.txt` in the env that will run it, and an

@@ -71,7 +71,7 @@ expert** — `model.use_code_expert=false` builds the same model with the video 
 | Checkpoint | Stage | Notes |
 |---|---|---|
 | [`miniFranka/agentic-wam-pretrain-yamego3k-soup-e1`](https://huggingface.co/miniFranka/agentic-wam-pretrain-yamego3k-soup-e1) | Pretrain | Robot (`yam`) + egocentric human (`ego`) mixture, 1 epoch. **Start here to post-train on your own task** (`paths.pretrain_ckpt`). |
-| [`miniFranka/agentic-wam-posttrain-robotwin-suit`](https://huggingface.co/miniFranka/agentic-wam-posttrain-robotwin-suit) | RoboTwin SFT | WAM and hybrid, shared 14-D stats and eval assets. [Setup and evaluation](docs/ROBOTWIN.md#released-checkpoints-one-time-setup-and-first-evaluation). |
+| [`miniFranka/agentic-wam-posttrain-robotwin-suit`](https://huggingface.co/miniFranka/agentic-wam-posttrain-robotwin-suit) | RoboTwin SFT | WAM and hybrid, shared 14-D stats and eval assets. [Setup and evaluation](docs/ROBOTWIN.md#evaluation). |
 
 The checkpoint holds every trained weight. The frozen public components load from their own releases: the Wan2.2
 VAE ([`Wan-AI/Wan2.2-TI2V-5B`](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B)), the instruction encoder
@@ -111,7 +111,7 @@ cd agentic-wam && claude
 ```
 
 The RoboTwin program-authoring skills (`robotwin-fix-loop`, `robotwin-evosearch`, `robotwin-collect`) are listed in
-[`.claude/README.md`](.claude/README.md) and [docs/ROBOTWIN.md](docs/ROBOTWIN.md) §2.
+[`.claude/README.md`](.claude/README.md) and [docs/ROBOTWIN.md](docs/ROBOTWIN.md)
 
 ## Repository layout
 
@@ -129,7 +129,7 @@ agentic-wam/
 │   ├── model/                  agenticwam_cosmos.yaml — the one model config
 │   ├── real_pre_train/         pretrain_magic_soup (task + data)
 │   ├── real_post_train/        posttrain_yam · posttrain_sharpa (task + general data configs)
-│   └── robotwin/               robotwin_wam · robotwin_hybrid, benchmark definition, eval presets
+│   └── robotwin/               robotwin_wam · robotwin_hybrid, benchmark definition, WAM/hybrid eval configs
 ├── scripts/                    train_real_{yam,sharpa}.sh · train_robotwin.sh · launch_train.py · preflight_sft.py
 │                               {pre,post}train_annotation*.sh · precompute_cosmos_text_embeds.py
 ├── codegen/
@@ -168,7 +168,7 @@ Post-train the released checkpoint on your own task, then serve it on the robot.
 | **Prepare data** | [docs/DATA.md](docs/DATA.md) | recordings → LeRobot shards (3 cameras, 224×320, 30 Hz) + 64-D stats + instruction embeddings |
 | **Code labels** | `bash scripts/posttrain_annotation_{yam,sharpa}.sh <stage>` | per-frame programs from the VLM labeling pipeline, or your own task program ([docs/CODE_ANNOTATION.md](docs/CODE_ANNOTATION.md)) |
 | **Post-train** | `bash scripts/train_real_yam.sh <dataset_dir> <code_cache.pt>` (or `train_real_sharpa.sh`) | 100k steps from the AW-0 checkpoint; runs `scripts/preflight_sft.py` first (`DRY_RUN=1` stops after the checks) |
-| **Serve (YAM)** | `CKPT=<step.pt> DATASET=<dataset_dir> INSTR="<instruction>" AGENTICWAM_DEPLOY_TOKEN=<token> bash deploy/launch_server.sh` | HTTP model server; the robot station sends 3 camera frames + 14-D joints and gets absolute joint targets ([docs/REALWORLD.md](docs/REALWORLD.md) §4) |
+| **Serve (YAM)** | `CKPT=/path/to/model.pt DATASET=<dataset_dir> INSTR="<instruction>" AGENTICWAM_DEPLOY_TOKEN=<token> bash deploy/launch_server.sh` | HTTP model server; the robot station sends 3 camera frames + 14-D joints and gets absolute joint targets ([docs/REALWORLD.md](docs/REALWORLD.md) §4) |
 
 ## RoboTwin 2.0
 
@@ -178,7 +178,7 @@ Post-train the released checkpoint on your own task, then serve it on the robot.
 | **Benchmark** | `python scripts/eval_robotwin_release.py wam` | released WAM checkpoint; every task × Easy / Hard, 100 episodes each, sharded over GPUs, resumable; start with `--tasks click_alarmclock --plan smoke --gpus 0` |
 | **Hybrid eval** | `python scripts/eval_robotwin_release.py hybrid --gpus 0 --vis-gpu 1` | released hybrid checkpoint; generated code executes through cap-x when accepted, with WAM fallback; checks/starts perception servers |
 
-[docs/ROBOTWIN.md](docs/ROBOTWIN.md) covers the simulator setup, data collection and every evaluation mode.
+[docs/ROBOTWIN.md](docs/ROBOTWIN.md) covers setup, evaluation, data collection and training.
 
 ## Pretraining
 

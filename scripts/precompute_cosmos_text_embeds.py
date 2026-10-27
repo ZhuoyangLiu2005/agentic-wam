@@ -7,7 +7,7 @@ padded/truncated to a fixed L (default 128; instructions are short so real token
 Usage (on a GPU node with HF internet for the Cosmos-Reason1 CONFIG only; weights come from the ckpt):
   python scripts/precompute_cosmos_text_embeds.py \
     --instructions <file, one per line> --out-dir <cache dir> \
-    --ckpt <checkpoint-200000> --max-len 128 [--limit N]
+    --ckpt /path/to/Cosmos-Reason1-7B --max-len 128 [--limit N]
 
 """
 import argparse, glob, hashlib, os, sys, torch

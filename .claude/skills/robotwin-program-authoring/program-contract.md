@@ -5,7 +5,7 @@ trained to write, one **stage** at a time, and what the hybrid eval executes sta
 declared inside the program with comment markers. `iterate/scripts/run_stage2.sh` checks them when it freezes the
 program (a violation aborts the freeze); `pipeline/scripts/collect_aligned.sh` turns them into the training cache when
 the collection ends. The engine is the trainer repo's slicer (`$SLICER`, see `env.sh`); its own documentation
-is `$TRAINER_ROOT/docs/ROBOTWIN.md` §3.2.
+is `$TRAINER_ROOT/docs/ROBOTWIN.md`
 
 ## Markers (top-level statements of the main body)
 

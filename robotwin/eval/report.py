@@ -101,7 +101,7 @@ def main():
                if c["done"] < c["shards"]]
     notes = []
     for n, m, _ in runs:
-        notes.append(f"- `{n}`: preset `{m['model']}`, checkpoint `{m['ckpt']}`, mode {m['mode']}, plan {m['plan']}")
+        notes.append(f"- `{n}`: config `{m['model']}`, checkpoint `{m['ckpt']}`, mode {m['mode']}, plan {m['plan']}")
     if missing:
         notes.append(f"- `*` = incomplete: {len(missing)} task/setting cells are missing shards "
                      f"(e.g. {missing[0][1]} {missing[0][2]}: {missing[0][3]}/{missing[0][4]} shards).")

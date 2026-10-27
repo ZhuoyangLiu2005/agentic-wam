@@ -1,6 +1,6 @@
 # AGENTICWAM-Cosmos: tri-modal MoT with the Cosmos-Predict2.5-2B DiT + Wan2.2 VAE video expert.
 # Built + weights loaded by create_agenticwam_cosmos (build.py). Video expert loads the
-# checkpoint-200000 key-for-key (transformer + video_tokenizer + vae); action/code train from scratch.
+# video checkpoint key-for-key (transformer + video_tokenizer + vae); action/code train from scratch.
 _target_: agenticwam.models.cosmos_mot.build.create_agenticwam_cosmos
 
 # Weights: every task starts from an AgenticWAM checkpoint (foundation_ckpt); the frozen VAE comes from the public

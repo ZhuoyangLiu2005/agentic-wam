@@ -26,14 +26,14 @@ def main(argv=None):
     sys.path.insert(0, str(ROOT / "robotwin"))
     from hybrid_eval import config, vision
 
-    model = "robotwin_" + args.mode
+    model = args.mode
     try:
         site = config.site()
-        preset = config.model_preset(model, site)
-        checkpoint = config.resolve_checkpoint(preset, args.ckpt)
-        required = [preset.get("dataset_stats") or site["dataset_stats"]]
+        settings = config.eval_config(model, site)
+        checkpoint = config.resolve_checkpoint(settings, args.ckpt)
+        required = [settings.get("dataset_stats") or site["dataset_stats"]]
         if args.mode == "wam":
-            required.append(preset["env"]["AGENTICWAM_TASK_SKILL_PROMPT"])
+            required.append(settings["skill_prompt"])
         for path in required:
             if not Path(path).is_file():
                 raise FileNotFoundError(f"release asset missing: {path}; download the complete model bundle")
@@ -53,7 +53,7 @@ def main(argv=None):
     env = dict(os.environ)
     env["PYTHONPATH"] = str(ROOT / "src") + os.pathsep + env.get("PYTHONPATH", "")
     cmd = [sys.executable, str(ROOT / "robotwin/eval/benchmark.py"),
-           "--model", model, "--mode", args.mode, "--ckpt", checkpoint, *benchmark_args]
+           "--config", model, "--mode", args.mode, "--ckpt", checkpoint, *benchmark_args]
     return subprocess.run(cmd, cwd=ROOT, env=env).returncode
 
 

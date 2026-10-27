@@ -332,7 +332,7 @@ class AgenticWAMCosmosRobotWinPolicy:
         self._save_all_replans = _parse_bool(os.environ.get("AGENTICWAM_SAVE_ALL_REPLANS", "0"))
 
         # [hybrid] AGENTICWAM_HYBRID=1: step-level code/WAM arbitration. Runtime package: robotwin/hybrid_eval/
-        # (arbiter.py, assemble.py, config.py; launch.py / vision.py CLIs; docs/ROBOTWIN.md §6). _last_code hands each
+        # (arbiter.py, assemble.py, config.py; launch.py / vision.py CLIs; docs/ROBOTWIN.md). _last_code hands each
         # replan's generated slice to the arbiter.
         self._last_code: Optional[str] = None
         self.hybrid = None

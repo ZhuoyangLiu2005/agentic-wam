@@ -6,5 +6,5 @@ description: "Turn a validated frozen RoboTwin program into a reviewed training 
 # RoboTwin collection
 
 Stage B of `codegen/sim`. Start with [INSTRUCTIONS.md](INSTRUCTIONS.md); commands and the handoff
-files are in [ROBOTWIN.md §2.6–2.7](../../../docs/ROBOTWIN.md). Commands run from
+files are in [ROBOTWIN.md](../../../docs/ROBOTWIN.md). Commands run from
 `codegen/sim` after `source env.sh`.

@@ -11,5 +11,5 @@ a LeRobot v2.1 dataset plus the stage-slicing cache this package defines.
     prepare.py       the three steps above in one command, plus a task config from task_template.yaml
 
 Nothing here is imported by the trainer at run time; the trainer only reads the files these scripts emit.
-Docs: docs/ROBOTWIN.md §3.1 (pipeline), §3.2 (stage contract).
+Docs: docs/ROBOTWIN.md (data collection and training).
 """

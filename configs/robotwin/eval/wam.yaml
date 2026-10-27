@@ -1,0 +1,19 @@
+# Evaluation settings for the released WAM model.
+mode: wam
+checkpoint: ${robotwin_release_dir}/wam.pt
+eval_task: robotwin_wam
+dataset_stats: ${dataset_stats}
+code_model: ${code_model}
+action_space: ""
+action_dim: 14
+proprio_dim: 14
+task_assets: false
+skill_prompt: ${robotwin_release_dir}/task_skill_prompt.json
+instruction_type: seen
+num_inference_steps: 20
+replan_steps: 24
+code_tokens: 128
+image_crop: 0.95
+decode:
+  confidence_threshold: 0.0
+  max_reveal_per_step: 9999

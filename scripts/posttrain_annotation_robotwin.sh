@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Code-labeled RoboTwin demonstrations: write + validate a task program in simulation (Stage A), collect
 # demonstrations whose every motion records the program line that produced it (Stage B), then hand the
-# dataset to training and the frozen program to the hybrid evaluation. Walkthrough: docs/ROBOTWIN.md §2-3, §6;
+# dataset to training and the frozen program to the hybrid evaluation. Walkthrough: docs/ROBOTWIN.md;
 # one-time setup: codegen/sim/SETUP.md (conda envs, RoboTwin checkout, site.yaml).
 #
 #   bash scripts/posttrain_annotation_robotwin.sh <stage> [stage args ...]

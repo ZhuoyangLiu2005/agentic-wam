@@ -21,7 +21,6 @@ ld_library_paths:                                            # FFmpeg 7 libs for
 robotwin_release_dir: ${repo}/checkpoints/robotwin_release    # hf download miniFranka/agentic-wam-posttrain-robotwin-suit --local-dir checkpoints/robotwin_release
 dataset_stats:   ${robotwin_release_dir}/dataset_stats.json
 code_model:      ${checkpoints_root}/SDAR-1.7B-Chat                 # SDAR-1.7B code body (HF JetLM/SDAR-1.7B-Chat)
-robotwin_cap_slices: /path/to/robotwin_cap_slices                   # = paths.robotwin_cap_slices (nn-repair slice corpus)
 diffsynth_model_base: ${agenticwam_root}/checkpoints
 ffmpeg:          ffmpeg                                      # rollout-viewer remux: a name on PATH or an absolute path
 viewer_out:      ${repo}/runs/rollout_viewer                 # default rollout_viewer.py output dir
@@ -38,31 +37,5 @@ dataprep:                                                 # training-data prep (
   text_cache_root:  /path/to/local_disk/cosmos_text_cache    # Cosmos-Reason1 prompt embeddings, ~25 MB per instruction
   text_encoder:     ${checkpoints_root}/Cosmos-Reason1-7B
   code_model:       ${code_model}
-  foundation_ckpt:  ${checkpoints_root}/<pretrain run>/checkpoints/weights/step_XXXXXX.pt
+  foundation_ckpt:  ${checkpoints_root}/pretrain/model.pt
   code_vision_path: ${checkpoints_root}/Qwen3-VL-2B-Instruct
-
-# ---------------------------------------------------------------------------------------------
-# Environment switches (NOT keys of this file -- export them around the eval command).
-# launch.py sets the plumbing ones itself (AGENTICWAM_HYBRID, AGENTICWAM_HYBRID_TASKS, AGENTICWAM_FROZEN_PROGRAM,
-# AGENTICWAM_CODE_PREAMBLE_FILE, AGENTICWAM_TRACE, ...); the ones below are what a run actually tunes.
-#
-#   AGENTICWAM_NN_REPAIR          0    1 = when the gate rejects a generated slice, serve the nearest GT
-#                               slice instead. The code channel is then NOT pure generation, so its
-#                               share is not comparable with a run that leaves this off.
-#   AGENTICWAM_NN_REPAIR_CORPUS   auto  root of the slice corpus to match against. launch.py derives it
-#                               from the preset's `eval_task` (task config -> data config ->
-#                               code_slices_cache_dir), so it normally needs no setting; export it
-#                               only to match against a different corpus on purpose.
-#   AGENTICWAM_NN_REPAIR_SIM      0.80 minimum similarity of the best match.
-#   AGENTICWAM_NN_REPAIR_MARGIN   0.05 minimum gap between the best and second-best match (ambiguity).
-#   AGENTICWAM_CODE_RETRY_CAP     3    re-executions allowed after code raises -- both for a step's slice
-#                               and for the episode-start prelude.
-#   AGENTICWAM_EVAL_PREPROC       parity  legacy | parity | parity_crop. `parity` applies the training
-#                               pipeline's stage-1 full-frame transform, which eval used to skip.
-#   AGENTICWAM_EVAL_PREPROC_CROP  0.95 centre-crop fraction, parity_crop only.
-#   AGENTICWAM_EOS_RUN_TRUNC      0    1 = strip the trailing EOS run and drop isolated interior EOS,
-#                               instead of truncating at the FIRST EOS (which turns a stray early
-#                               EOS into a comment-only slice).
-#   AGENTICWAM_FRAME_EVERY        12   sim steps per recorded video frame.
-#   AGENTICWAM_SAVE_ALL_REPLANS   0    1 = keep a video for every replan, not just the first.
-#   AGENTICWAM_DEPLOY_DTYPE       fp32 policy dtype at inference.
