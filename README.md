@@ -71,7 +71,7 @@ expert** — `model.use_code_expert=false` builds the same model with the video 
 | Checkpoint | Stage | Notes |
 |---|---|---|
 | [`miniFranka/agentic-wam-pretrain-yamego3k-soup-e1`](https://huggingface.co/miniFranka/agentic-wam-pretrain-yamego3k-soup-e1) | Pretrain | Robot (`yam`) + egocentric human (`ego`) mixture, 1 epoch. **Start here to post-train on your own task** (`paths.pretrain_ckpt`). |
-| [`miniFranka/agentic-wam-posttrain-robotwin-suit`](https://huggingface.co/miniFranka/agentic-wam-posttrain-robotwin-suit) | RoboTwin SFT | WAM (200k) and hybrid (180k), shared 14-D stats and eval assets. [Setup and evaluation](docs/ROBOTWIN.md#released-checkpoints-one-time-setup-and-first-evaluation). |
+| [`miniFranka/agentic-wam-posttrain-robotwin-suit`](https://huggingface.co/miniFranka/agentic-wam-posttrain-robotwin-suit) | RoboTwin SFT | WAM and hybrid, shared 14-D stats and eval assets. [Setup and evaluation](docs/ROBOTWIN.md#released-checkpoints-one-time-setup-and-first-evaluation). |
 
 The checkpoint holds every trained weight. The frozen public components load from their own releases: the Wan2.2
 VAE ([`Wan-AI/Wan2.2-TI2V-5B`](https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B)), the instruction encoder
