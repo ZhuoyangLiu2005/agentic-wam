@@ -316,3 +316,66 @@ GPU=0 bash deploy/launch_server_sharpa.sh
      - `s` / `f` / `q` + Enter ends the episode, and the arms hold their last target
      - each episode is saved to `runs/sharpa_eval/<session>/ep_NNN/` (code, model view, steps, result)
 
+
+## Held-out open-loop test (2026-10-26)
+- **Goal:** run the tong-transfer `step20000` checkpoint (trained on episodes 0–99) on held-out episodes and render one video per episode with the generated code and predicted vs ground-truth actions. Model output only: no robot, no server, no IK
+- **Episodes:** 100, 110, …, 190 (10 of the 100 held-out), whole episodes
+- **Inputs:** the v2.1 shard directly (`train_shard_0`: 224×320 frames + raw 76-D state, exactly what training saw), so no camera crop or FK
+- **Replan every 24 frames** (deployment's `replan_steps`). Each video frame shows the code of the most recent replan
+- **Settings as in deployment:** bf16, `AGENTICWAM_FAST_JOINT=1`, `AGENTICWAM_NOISE_SEED=1234`, 6 denoise steps, horizon 32, `infer_code_tokens=128`. **Code pinning off**: fresh code at every replan (deployment pins the step-0 program; `--code-pin` restores that)
+- **Comparison in the model's 64-D EEF space:** prediction = `TianjiSharpaUnifiedEEFTransform.backward(delta, state[t])`, GT = `_state64(action[t:t+32])`. Errors: EEF position (mm), geodesic rotation (deg), hand mean |err| (rad); reported on the 24 executed rows and on all 32
+- **Video panels:** real head + wrists; the imagined views at the same moment (imagined frame `min(8, round(k/4))` of the current chunk); the current code; R EEF xyz, L EEF xyz, R hand mean, per-chunk position error
+- **Scripts:** `scripts/sharpa_heldout_infer.py` (GPU) and `scripts/sharpa_heldout_video.py` (CPU)
+- **Where it ran:** a100-1 (dgx1), GPU 6 selected by UUID `GPU-ae270a3b-…`. a100-1 shares the NFS home with r6000. r6000 GPU 4 is in a "GPU requires reset" state and CUDA hides it, so `CUDA_VISIBLE_DEVICES=4` there lands on GPU 5 (another user's)
+- **The run needs Hugging Face hub access:** `deploy_policy._CosmosTextEncoder` loads `AutoProcessor.from_pretrained("nvidia/Cosmos-Reason1-7B")` by hub id
+- **Measured:** peak 31.1 GiB VRAM, ~1.04 s per replan after a ~60 s first-call compile
+- **Outputs:** `runs/heldout_openloop/full10/` (laptop: `ep_NNN/{demo.mp4,metrics.json,codes.jsonl}` + `summary.json`; a100-1/r6000 also has `pred.npz` with the chunks and imagined videos)
+
+### Result videos
+One mp4 per episode at 30 fps, covering the whole episode. Re-render with `python scripts/sharpa_heldout_video.py runs/heldout_openloop/full10` (CPU, reads `pred.npz`).
+
+Each frame:
+- the real head and wrist views over the imagined views
+- the current replan's code (header turns orange when it changes)
+- plots, GT solid vs prediction dashed, with a moving cursor: R EEF xyz, L EEF xyz, R hand mean, error per chunk
+
+| Episode | Video | Frames | Length |
+|---|---|---|---|
+| 100 | `runs/heldout_openloop/full10/ep_100/demo.mp4` | 1346 | 44.9 s |
+| 110 | `runs/heldout_openloop/full10/ep_110/demo.mp4` | 1024 | 34.1 s |
+| 120 | `runs/heldout_openloop/full10/ep_120/demo.mp4` | 1210 | 40.3 s |
+| 130 | `runs/heldout_openloop/full10/ep_130/demo.mp4` | 925 | 30.8 s |
+| 140 | `runs/heldout_openloop/full10/ep_140/demo.mp4` | 1516 | 50.5 s |
+| 150 | `runs/heldout_openloop/full10/ep_150/demo.mp4` | 1129 | 37.6 s |
+| 160 | `runs/heldout_openloop/full10/ep_160/demo.mp4` | 1455 | 48.5 s |
+| 170 | `runs/heldout_openloop/full10/ep_170/demo.mp4` | 981 | 32.7 s |
+| 180 | `runs/heldout_openloop/full10/ep_180/demo.mp4` | 1595 | 53.2 s |
+| 190 | `runs/heldout_openloop/full10/ep_190/demo.mp4` | 935 | 31.2 s |
+
+### Results
+Open-loop error of the 24 executed rows of each replan against the recorded action, averaged over the replans:
+- position: EEF translation (mm)
+- rotation: geodesic angle (°)
+- hand: mean |err| over 22 joints (rad)
+- row 0: the chunk's first row against the observed state (mm)
+- code: distinct programs / changes between consecutive replans
+
+| Ep | Replans | Pos L | Pos R | Rot L | Rot R | Hand L | Hand R | Row 0 L | Row 0 R | Code distinct / changes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 100 | 57 | 8.5 | 15.4 | 1.5 | 4.2 | 0.008 | 0.016 | 4.8 | 8.9 | 43 / 45 |
+| 110 | 43 | 6.9 | 18.8 | 1.1 | 5.2 | 0.012 | 0.026 | 4.4 | 11.4 | 42 / 41 |
+| 120 | 51 | 6.5 | 13.7 | 1.1 | 3.9 | 0.008 | 0.020 | 4.1 | 7.7 | 41 / 42 |
+| 130 | 39 | 6.8 | 20.7 | 1.2 | 5.4 | 0.007 | 0.025 | 4.3 | 12.3 | 39 / 38 |
+| 140 | 64 | 10.1 | 25.6 | 2.0 | 6.7 | 0.012 | 0.021 | 5.8 | 14.0 | 58 / 61 |
+| 150 | 47 | 7.4 | 18.9 | 1.1 | 4.9 | 0.006 | 0.023 | 4.0 | 10.2 | 46 / 45 |
+| 160 | 61 | 7.7 | 18.7 | 1.3 | 4.8 | 0.006 | 0.017 | 4.6 | 10.3 | 56 / 57 |
+| 170 | 41 | 7.8 | 16.2 | 1.0 | 4.2 | 0.006 | 0.025 | 4.7 | 10.4 | 40 / 39 |
+| 180 | 67 | 7.3 | 18.7 | 1.6 | 4.7 | 0.009 | 0.019 | 4.3 | 10.3 | 67 / 66 |
+| 190 | 39 | 7.0 | 16.7 | 1.2 | 4.0 | 0.008 | 0.024 | 4.0 | 9.5 | 37 / 36 |
+| **Mean** | | **7.6** | **18.3** | **1.3** | **4.8** | **0.008** | **0.021** | | | |
+
+- All 32 rows of each chunk (mean): position L 8.4 / R 20.5 mm, rotation L 1.5 / R 5.4°, hand L 0.008 / R 0.023 rad
+- The right arm (the hand that does the task) has about 2.4× the left arm's position error in every episode. Episode 140 is the worst (25.6 mm), 120 the best (13.7 mm)
+- The predicted EEF and hand curves track GT through whole episodes (see the videos)
+- With pinning off, the code changes at almost every replan. Some replans contain garbled tokens (e.g. `robot.moveplastic bags', 'right')`), and training episode 0 shows the same, so this is not specific to held-out data. The labels at the start of episode 100 are the single line `robot.grasp('tong', 'right')`, while the model often writes a multi-step plan
+- **Reference (training episode 0, first 3 replans only):** position L 3.1 / R 7.9 mm, rotation L 0.9 / R 1.4°. This is too short to measure the held-out gap; a full-length run on a few training episodes is not done yet
