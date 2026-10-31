@@ -505,7 +505,7 @@ Left EEF (the arm that mostly idles), held-out mean: position 7.6 / 7.6 / 7.4 / 
 
 - Same picture as the joint error: step 15000 has the lowest held-out mean (R 18.6 mm / 5.02°), but 10000-20000 are within ~1 mm / 0.2° of each other, which is inside the episode-to-episode spread (episode 140 is the worst for every checkpoint, 15-24 mm). Step 5000 is clearly the worst (20.0 mm / 5.66°) and step 20000 is worse than 15000 on position (19.6 mm), again consistent with mild overfitting
 - On the trained episode 0 the error keeps falling with training (14.5 → 9.1 mm, 4.24 → 2.45°); held-out does not follow
-- The curves are spiky rather than a uniform offset: errors of 25-30 mm / 3-8° are typical and sharp peaks (100-150 mm, 25-30°) appear at the same moments in all four checkpoints (e.g. frame ~1090 in episode 100, ~1220 in episode 140), so they are properties of the episode (fast or ambiguous phases), not of one checkpoint. The error also rises at replan boundaries (grey lines)
+- The curves are spiky rather than a uniform offset: errors of 25-30 mm / 3-8° are typical and sharp peaks (100-150 mm, 25-30°) appear at the same moments in all four checkpoints (e.g. frame ~1090 in episode 100, ~1220 in episode 140), so they are properties of the episode (fast or ambiguous phases), not of one checkpoint.
 - Open-loop only, one replay per checkpoint; it says nothing about closed-loop success
 
 Curves, one figure per episode with the four checkpoints side by side (top right-EEF position error, bottom rotation error; thin = per frame, red = 1 s moving average, grey lines = replan boundaries). Regenerate with `~/venvs/agenticwam-deploy/bin/python scripts/replay_eef_error.py`.
