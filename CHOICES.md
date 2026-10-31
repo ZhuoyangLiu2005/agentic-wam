@@ -453,18 +453,28 @@ Right hand (22 joints), mean |err| (rad):
 - On trained episode 0 the arm error keeps falling with training (0.037 → 0.024) and the hand is lowest at 15000 (0.006), but held-out error does not follow
 - Open-loop tracking of recorded actions only: it says nothing about closed-loop success
 
-Plots (solid = recorded, dashed = predicted; top right-arm joints 1-7, bottom first 6 right-hand joints; grey lines = replan boundaries).
+Plots, one per episode with the four checkpoints side by side (columns = step 5000 / 10000 / 15000 / 20000; top right-arm joints 1-7, bottom first 6 right-hand joints; solid = recorded, dashed = predicted, grey lines = replan boundaries; per-panel mean |err| in the title). Regenerate with `python scripts/replay_compare_by_episode.py`.
 
-Step 15000, episodes 0, 100, 110, 120, 130, 140, 150, 160:
-![replay step 15000](docs/images/replay_compare_step15000.png)
+Episode 0 (trained on):
+![episode 0](docs/images/by_episode/ep0.png)
 
-Episodes 120-160 for the other checkpoints (episodes 0, 100, 110 are the plots above):
+Episode 100 (held out):
+![episode 100](docs/images/by_episode/ep100.png)
 
-step 5000
-![replay step 5000, ep 120-160](docs/images/replay_compare_step5000_ep120-160.png)
+Episode 110 (held out):
+![episode 110](docs/images/by_episode/ep110.png)
 
-step 10000
-![replay step 10000, ep 120-160](docs/images/replay_compare_step10000_ep120-160.png)
+Episode 120 (held out):
+![episode 120](docs/images/by_episode/ep120.png)
 
-step 20000
-![replay step 20000, ep 120-160](docs/images/replay_compare_step20000_ep120-160.png)
+Episode 130 (held out):
+![episode 130](docs/images/by_episode/ep130.png)
+
+Episode 140 (held out):
+![episode 140](docs/images/by_episode/ep140.png)
+
+Episode 150 (held out):
+![episode 150](docs/images/by_episode/ep150.png)
+
+Episode 160 (held out):
+![episode 160](docs/images/by_episode/ep160.png)
