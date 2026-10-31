@@ -138,10 +138,19 @@ cd ~/agentic-wam
 D=$PWD/data_local/trex_tong_transfer_aw76_v21
 SKIP_PREFLIGHT=1 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 NPROC=8 PYTHON=$HOME/venvs/agenticwam-data/bin/python \
 bash scripts/train_real_sharpa.sh $D $D/policy_code_idx_trex_v1.pt paths=r6000 model.infer_code_tokens=128 \
-  num_epochs=1 data.train.episode_indices=$D/episodes_0_99.json
+  num_epochs=1 data.train.episode_indices=$D/episodes_0_99.json \
+  data.val.episode_indices=$D/episodes_100_199.json \
+  max_steps=20000 save_every=5000 eval_every=1000
 ```
+Create the eval episode list once before launching: `python3 -c "import json; json.dump(list(range(100,200)), open('$D/episodes_100_199.json','w'))"`
 - 8 GPUs (2026-10-24): 4 per GPU, global batch 32, `learning_rate` unchanged at 1e-4
 - `max_steps=null` removed (2026-10-24): the length is the task config's `max_steps: 100000`, and `num_epochs=1` is ignored while `max_steps` is set (`trainer.py` `_estimate_total_train_steps`)
+- Run length and cadence (2026-10-29): `max_steps=20000`, `save_every=5000` (checkpoints at 5k/10k/15k/20k; task default 20000), `eval_every=1000` (task default 2000)
+- Overfitting (2026-10-29): 20000 steps overfits heavily, so do not treat the step-20k checkpoint as the default pick. Choose the checkpoint from the `eval_every=1000` val curve on episodes 100-199, and prefer an earlier save (5k/10k/15k) where val loss bottoms out
+- Eval split (2026-10-29): `data.val.episode_indices` = episodes 100-199, disjoint from the 0-99 training episodes. Out-of-range indices are silently dropped, so check the `Using explicit episode_indices` log line for the loaded count
+
+
+Step-20000 server replay plot: see "Server + client replay across checkpoints (2026-10-30)" at the end of this file.
 
 ## Deployment on vega + Sharpa (2026-10-24)
 Branch `worktree-vega-sharpa-deploy`, commits `5b096b5`, `1958079`, `05c8697` (not pushed). Serve with `deploy/remote/server.py` through `deploy/launch_server.sh`. The older `deploy/deploy_server.py` stays YAM-only.
@@ -379,3 +388,83 @@ Open-loop error of the 24 executed rows of each replan against the recorded acti
 - The predicted EEF and hand curves track GT through whole episodes (see the videos)
 - With pinning off, the code changes at almost every replan. Some replans contain garbled tokens (e.g. `robot.moveplastic bags', 'right')`), and training episode 0 shows the same, so this is not specific to held-out data. The labels at the start of episode 100 are the single line `robot.grasp('tong', 'right')`, while the model often writes a multi-step plan
 - **Reference (training episode 0, first 3 replans only):** position L 3.1 / R 7.9 mm, rotation L 0.9 / R 1.4°. This is too short to measure the held-out gap; a full-length run on a few training episodes is not done yet
+
+## Server + client replay across checkpoints (2026-10-30)
+- **Goal:** compare the 5k / 10k / 20k checkpoints of the tong-transfer post-training run (`run_20k`) through the same path as deployment. Nothing moves: no robot SDK is imported
+- **Checkpoints:** `step5000` and `step10000` from `https://huggingface.co/xinyuan-eval/tong-transfer-sharpa/tree/main/run_20k`, downloaded to `checkpoints/tong-transfer-sharpa-run20k/run_20k/stepN/model.pt`. `dataset_stats_eef64.json` and `config.yaml` were copied beside each from `checkpoints/tong-transfer-sharpa/step20000/` (same training data, so same stats). `step20000` is `checkpoints/tong-transfer-sharpa/step20000/` (earlier run, 2026-10-30 03:03)
+- **Loop:** `scripts/replay_plot.py` takes the recorded raw frames + 58-D state of an episode, POSTs `/act` to the server (`deploy/launch_server_sharpa.sh`, 127.0.0.1:8712) every 24 rows, and keeps the predicted absolute 58-D rows (after the server's IK) to compare with the recorded action. Episodes: 0 (trained on), 100 and 110 (held out)
+- **Driver:** `GPU=<UUID> bash scripts/replay_plot_ckpts.sh <model.pt> [<model.pt> ...]` serves each checkpoint in turn, replays, plots, stops the server. Output `runs/replay_plot/<run>_<step>/{ep*.npz,replay_compare.png}`; server log, generated code and imagined video in `runs/deploy_sharpa_<run>_<step>/`
+  - The server's `/health` needs the token, so the script waits on `/ping`
+  - The first `/act` compiles the denoise core (~75 s), so `replay_plot.py` sets `request_timeout_s=300` (the client default of 30 s fails with "server busy (503)")
+- **Where it ran:** a100-1 (dgx1), GPU 7 selected by UUID `GPU-b032f37b-…`, for step 5000 and 10000. r6000 GPU 6 never had the ~19+ GiB free (other users' jobs held ~29 GiB), so both attempts there ran out of memory. The step-20000 run was on r6000 earlier
+- **Metric:** mean |predicted - recorded| in rad over all replayed frames (right arm = 7 joints, 58-D idx 29:36; right hand = all 22 joints, idx 36:58)
+
+| Checkpoint | Metric | Ep 0 (trained) | Ep 100 (held out) | Ep 110 (held out) |
+|---|---|---|---|---|
+| step 5000 | right arm | 0.037 | 0.047 | 0.049 |
+| step 10000 | right arm | 0.030 | 0.046 | 0.052 |
+| step 20000 | right arm | 0.024 | 0.045 | 0.049 |
+| step 5000 | right hand | 0.012 | 0.017 | 0.024 |
+| step 10000 | right hand | 0.009 | 0.016 | 0.022 |
+| step 20000 | right hand | 0.009 | 0.017 | 0.026 |
+
+- Trained episode 0: error falls with training (arm 0.037, 0.030, 0.024)
+- Held-out episodes 100 and 110: the three checkpoints are within 0.007 rad of each other with no clear winner, so more training does not improve held-out tracking. This matches the overfitting note in "Post-training command". Step 20000 is the worst on the episode-110 hand (0.026 vs 0.022 at 10k)
+- Only 3 episodes, and the checkpoints were served in separate server starts, so differences this small are within noise. Pick the checkpoint from the val curve, or replay more of episodes 100-199, before choosing
+
+Plots (solid = recorded, dashed = predicted; top right-arm joints 1-7, bottom first 6 right-hand joints; grey lines = replan boundaries):
+
+step 5000
+![replay step 5000](docs/images/replay_compare_step5000.png)
+
+step 10000
+![replay step 10000](docs/images/replay_compare_step10000.png)
+
+step 20000
+![replay step 20000](docs/images/replay_compare_step20000.png)
+
+### Four checkpoints, 8 episodes (2026-10-30, later)
+Added step 15000 and episodes 120, 130, 140, 150, 160 (same loop, server and metric as above), so every checkpoint has episode 0 (trained on) and 100-160 (held out, 7 episodes).
+- **Step 15000:** `run_20k/step15000` downloaded from the same Hugging Face folder, stats + config copied beside it as for 5k/10k. Whole job (download, serve, replay all 8 episodes, summary): `scripts/replay_step15000_pipeline.sh`. Only the download needs the network; the server runs with `HF_HUB_OFFLINE=1`
+- **Others on 120-160:** `OUT_ROOT=runs/replay_plot_more EPISODES="120 130 140 150 160" bash scripts/replay_plot_ckpts.sh <5k> <10k> <20k>`. All of it ran on a100-1 GPU 7 (UUID `GPU-b032f37b-…`), with the step-15000 server on port 8713 next to the other on 8712
+- **Summary table:** `python scripts/replay_summary.py` (numpy only) writes `runs/replay_summary.md` from the saved `ep<N>.npz`
+
+Right arm, mean |err| (rad):
+
+| Step | Ep 0 (trained) | 100 | 110 | 120 | 130 | 140 | 150 | 160 | Held-out mean |
+|---|---|---|---|---|---|---|---|---|---|
+| 5000 | 0.037 | 0.047 | 0.049 | 0.044 | 0.050 | 0.057 | 0.043 | 0.045 | 0.048 |
+| 10000 | 0.030 | 0.046 | 0.052 | 0.043 | 0.047 | 0.056 | 0.041 | 0.039 | 0.046 |
+| 15000 | 0.026 | 0.045 | 0.052 | 0.041 | 0.046 | 0.055 | 0.040 | 0.038 | **0.045** |
+| 20000 | 0.024 | 0.045 | 0.049 | 0.042 | 0.048 | 0.061 | 0.039 | 0.039 | 0.046 |
+
+Right hand (22 joints), mean |err| (rad):
+
+| Step | Ep 0 (trained) | 100 | 110 | 120 | 130 | 140 | 150 | 160 | Held-out mean |
+|---|---|---|---|---|---|---|---|---|---|
+| 5000 | 0.012 | 0.017 | 0.024 | 0.019 | 0.024 | 0.018 | 0.020 | 0.017 | 0.020 |
+| 10000 | 0.009 | 0.016 | 0.022 | 0.017 | 0.023 | 0.019 | 0.022 | 0.015 | 0.019 |
+| 15000 | 0.006 | 0.015 | 0.022 | 0.017 | 0.023 | 0.020 | 0.021 | 0.014 | **0.019** |
+| 20000 | 0.009 | 0.017 | 0.026 | 0.020 | 0.024 | 0.022 | 0.023 | 0.016 | 0.021 |
+
+- Held-out error is nearly flat across checkpoints (arm 0.048 / 0.046 / 0.045 / 0.046, hand 0.020 / 0.019 / 0.019 / 0.021), much smaller than the spread between episodes (140 is worst for every checkpoint)
+- Step 15000 has the lowest held-out mean on both, but by ~0.001 rad, which is within noise. 10000, 15000 and 20000 cannot be separated by this replay
+- Step 20000 is the only one that gets worse on held-out (hand 0.021; episode 140 arm 0.061 vs 0.055 at 15000), in line with the overfitting note
+- On trained episode 0 the arm error keeps falling with training (0.037 → 0.024) and the hand is lowest at 15000 (0.006), but held-out error does not follow
+- Open-loop tracking of recorded actions only: it says nothing about closed-loop success
+
+Plots (solid = recorded, dashed = predicted; top right-arm joints 1-7, bottom first 6 right-hand joints; grey lines = replan boundaries).
+
+Step 15000, episodes 0, 100, 110, 120, 130, 140, 150, 160:
+![replay step 15000](docs/images/replay_compare_step15000.png)
+
+Episodes 120-160 for the other checkpoints (episodes 0, 100, 110 are the plots above):
+
+step 5000
+![replay step 5000, ep 120-160](docs/images/replay_compare_step5000_ep120-160.png)
+
+step 10000
+![replay step 10000, ep 120-160](docs/images/replay_compare_step10000_ep120-160.png)
+
+step 20000
+![replay step 20000, ep 120-160](docs/images/replay_compare_step20000_ep120-160.png)
