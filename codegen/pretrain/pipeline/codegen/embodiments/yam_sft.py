@@ -77,7 +77,9 @@ def load_yam_sft_episode(shard: str, episode_index: int = 0):
 
     return Episode(instruction=instruction, clip=clip, sub_id=sub_id,
                    text={int(k): v for k, v in rec["text"].items()},
-                   per_arm=per_arm, fps=30.0,
+                   # per_arm=per_arm, fps=30.0,
+                   # The shard's own fps (RoboDojo X5 shards are 25 Hz; YAM shards are 30).
+                   per_arm=per_arm, fps=float(json.loads((d / "meta" / "info.json").read_text())["fps"]),
                    meta={"dataset": str(d), "episode_index": episode_index,
                          "detector": "gripper-velocity-debounced", "source": "yam_sft"},
                    episode_id=f"episode_{episode_index:03d}")

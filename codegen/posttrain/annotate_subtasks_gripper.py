@@ -104,14 +104,19 @@ def main():
         nonlocal n_calls
         d = os.path.join(args.dataset, shard)
         eps = [json.loads(l) for l in open(os.path.join(d, "meta/episodes.jsonl"))]
+        FPS = float(json.load(open(os.path.join(d, "meta/info.json")))["fps"])  # shard fps (RoboDojo X5: 25; YAM: 30)
         if args.episodes:
             eps = eps[: args.episodes]
         out_p = os.path.join(d, "subtasks.json")
         out = json.loads(open(out_p).read()) if os.path.exists(out_p) else {}
-        for e in eps:
+        # Episodes run in parallel inside a shard (a one-shard view used to be sequential) and subtasks.json is
+        # saved after every episode, so a stopped run keeps what it already paid for. (2026-11-03, RoboDojo)
+        def do_episode(e):
+            nonlocal n_calls
             i = e["episode_index"]
-            if str(i) in out and not args.dry_run:
-                continue                                    # resumable
+            with lock:
+                if str(i) in out and not args.dry_run:
+                    return                                  # resumable
             df = pd.read_parquet(os.path.join(d, f"data/chunk-000/episode_{i:06d}.parquet"))
             st = np.stack(df["observation.state"].to_numpy()).astype(np.float64)
             T = len(st)
@@ -160,16 +165,29 @@ def main():
                                "events": {h: [[int(f), k] for f, k in v] for h, v in ev.items()}}
                 print(f"  {shard}/ep{i:02d} T={T} spans={len(spans)} "
                       + ("(dry)" if args.dry_run else "| " + " | ".join(list(text.values())[:3])), flush=True)
+                if not args.dry_run:                         # checkpoint after every episode
+                    json.dump(out, open(out_p + ".tmp", "w")); os.replace(out_p + ".tmp", out_p)
+
+        if args.workers > 1 and not args.dry_run:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=args.workers) as pool:
+                for f in [pool.submit(do_episode, e) for e in eps]:
+                    f.result()
+        else:
+            for e in eps:
+                do_episode(e)
         json.dump(out, open(out_p, "w"))
 
-    if args.workers > 1 and not args.dry_run:
-        from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=args.workers) as pool:
-            for f in [pool.submit(do_shard, s) for s in shards]:
-                f.result()
-    else:
-        for s in shards:
-            do_shard(s)
+    # if args.workers > 1 and not args.dry_run:
+    #     from concurrent.futures import ThreadPoolExecutor
+    #     with ThreadPoolExecutor(max_workers=args.workers) as pool:
+    #         for f in [pool.submit(do_shard, s) for s in shards]:
+    #             f.result()
+    # else:
+    #     for s in shards:
+    #         do_shard(s)
+    for s in shards:                                        # shards in turn; --workers parallelises episodes
+        do_shard(s)
     print(f"[subtasks] shards={len(shards)} VLM calls={n_calls}", flush=True)
     print("SUBTASKS_DONE", flush=True)
 

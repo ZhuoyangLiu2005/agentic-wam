@@ -1,0 +1,24 @@
+# Labeling config for the RoboDojo sim dual-ARX-X5 dataset in the YAM 82-D layout (CHOICES.md, RoboDojo section).
+# Launch through scripts/posttrain_annotation_yam.sh with
+#   CODEGEN_CONFIG=configs/yam_sft_robodojo.yaml YAM_SFT_DATASET=<labeling view> VLM_API_KEY=<key>
+# The dataset is NOT a config key for this embodiment: it comes from YAM_SFT_DATASET.
+# Precedence per key: CLI flag > env var > this file > built-in default.
+
+# --- this run ----------------------------------------------------------------
+embodiment: yam_sft
+tag: robodojo_v1                                    # campaign version tag
+vanilla: false
+
+# --- actor -------------------------------------------------------------------
+vlm_url: https://inference-api.nvidia.com/v1/chat/completions   # key in VLM_API_KEY, never here
+coder_model: gcp/google/gemini-3.1-pro-preview
+yam_frame_gap: 33                                   # 40 frames at 30 fps ~= 1.33 s -> 33 frames at 25 fps
+repair_retries: 2
+max_slices: 0
+vlm_max_tokens: 4096
+vlm_temperature: 0.1
+
+# --- batch / coordinator -----------------------------------------------------
+parallel: 5
+tasks_per_round: 8
+actor_timeout: 7200

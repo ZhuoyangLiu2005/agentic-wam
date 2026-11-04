@@ -479,3 +479,159 @@ Episode 150 (held out):
 Episode 160 (held out):
 ![episode 160](docs/images/by_episode/ep160.png)
 
+
+# Choices: RoboDojo sim (dual ARX X5) → AgenticWAM (2026-11-03)
+
+## Data
+- Source: `bash RoboDojo/scripts/RoboDojo/download_data.sh huggingface lerobot_v2.1` → `RoboDojo/data/RoboDojo_lerobot_v21_video` (64 GB). One v2.1 dataset, 35 tasks × 100 episodes, 1,856,102 frames, 25 Hz. State/action are 14-D joint-only `[L j0..5, L grip, R j0..5, R grip]`, with `action[t] = state[t+1]` (checked). Videos are AV1 480×640, `cam_high`/`cam_left_wrist`/`cam_right_wrist`
+- The release has no EE poses, so poses come from FK of `Assets/Robots/x5/X5A.urdf` (joint1–6, ee_link `link6`). Checked on the `demo` HDF5s: spawn pose (`env_cfg/robot/dual_x5.yml`) @ FK reproduces the recorded `state/*_ee_poses` to ~0.1 mm
+- Raw layout = the **YAM 82-D layout**, so `YamUnifiedEEFTransform`, `configs/real_post_train/data/yam.yaml`, `posttrain_yam` and `scripts/train_real_yam.sh` are reused unchanged. Each arm's link6 pose is in its own base frame: [0:16] L, [16:32] R, [32]/[33] grippers (1 = open, ~0.08–0.3 = closed, same direction as YAM), [34:46] arm joints for IK/reference, rest zero. The FK → transform forward → backward round trip is exact (6e-8)
+- Converter `utils/convert_robodojo_v21_to_yam82.py`: one shard per task (`train_shard_<task_index>`). Video crop rows 16:464 (448×640 = the 224:320 aspect), area-resize to 224×320, h264. **fps kept at 25** (the loader reads each shard's fps; the sim steps at 25 Hz). The deploy side must apply the same crop
+- Split: episodes 0–94 of every shard train, 95–99 val (175 episodes). A plain list in `episode_indices` applies to each shard
+
+## Code labels
+- Route A with the `yam_sft` embodiment and the frozen `yam` library (it reads the 82-D layout: EEF 0/16, grip 32/33)
+- `annotate_subtasks_gripper.py` and `embodiments/yam_sft.py` hard-coded 30 fps; both now read `meta/info.json` fps (old line kept commented in `yam_sft.py`)
+
+## Progress (2026-11-03, d3)
+- Converted: `data_local/robodojo_x5_yam82`, 35 shards × 100 episodes, 1,856,102 frames, 4.5 GB (`data_local/convert_robodojo.log`). The 4-episode pilot frames were checked by eye
+- `dataset_stats_eef64.json` via `utils/make_stats.py --transform yam` (the only constant-zero dims are the hand blocks)
+- `cosmos_text_embeds_cache/`: 35 instructions (Cosmos-Reason1-7B, max-len 128). `verify_instruction_embeds`: mismatch 0, embed_miss 0
+- `episodes_0_94.json` / `episodes_95_99.json` written
+- Free slicer dry run: 30,383 slices, median 8 per episode, max 26; 22 episodes have a single span
+- GPUs on d3: nvidia-smi index ≠ CUDA index (GPU 4 is not visible to CUDA), so select by UUID (`CUDA_VISIBLE_DEVICES=GPU-...`)
+
+## Code labels: stack_bowls only (2026-11-03)
+- You chose to label only stack_bowls (`train_shard_30`, "Stack the three bowls together."), not DLC. Training view `data_local/robodojo_x5_stack_bowls`: `train_shard_0` → `../robodojo_x5_yam82/train_shard_30`, its own `dataset_stats_eef64.json`, cosmos cache symlinked (verify: mismatch 0, embed_miss 0), splits 0–94 / 95–99
+- Engine config `codegen/pretrain/pipeline/configs/yam_sft_robodojo.yaml` (tag `robodojo_v1`, NVIDIA endpoint, gemini-3.1-pro-preview, `yam_frame_gap` 33 = 40 × 25/30). The YAM template `configs/yam.yaml` is untouched
+- Dry-run splits kept as `train_shard_30/subtasks.dry.json`: the slicer skips episodes already in `subtasks.json`, so the dry entries had to be moved aside before the paid run
+- Paid pilot, 5 episodes: subtasks (33 VLM calls), then label → 4/5 reconciled; matched_raw 19/31 = 0.61, repaired share 11/31 = 0.35 (T-Rex pilot: matched_raw 0.40)
+
+## RoboDojo setup and training commands (2026-11-03)
+
+25 Hz is kept (decided 2026-11-03). The data, conversion and labeling steps are recorded in the sections above.
+
+### Train (from `checkpoints/agentic-wam-pretrain-yamego3k-soup-e1/agenticwam_pretrain.pt` via `paths=r6000`)
+Standalone: it sets everything it uses.
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+cd ~/agentic-wam
+PY=$HOME/venvs/agenticwam-data/bin/python                  # the post-training venv ("Post-training environment setup" above)
+V=$HOME/agentic-wam/data_local/robodojo_x5_stack_bowls      # training view: train_shard_0 -> robodojo_x5_yam82/train_shard_30
+CACHE=$V/policy_code_idx_robodojo_v1.pt                     # code-label cache, all 100 episodes
+export WANDB_API_KEY="${WANDB_API_KEY:-}"                   # yours; empty -> add wandb.enabled=false
+COMMON=(paths=r6000 model.infer_code_tokens=128
+        data.train.episode_indices=$V/episodes_0_94.json data.val.episode_indices=$V/episodes_95_99.json
+        data.val.frame_offset=43524)                       # val episodes 95-99 start at cache frame 43,524
+# gate
+DRY_RUN=1 NPROC=8 PYTHON=$PY bash scripts/train_real_yam.sh $V $CACHE "${COMMON[@]}"
+# smoke (3 steps)
+NPROC=8 PYTHON=$PY bash scripts/train_real_yam.sh $V $CACHE "${COMMON[@]}" \
+  max_steps=3 save_every=3 wandb.enabled=false output_dir=/tmp/smoke
+# run
+RUN_ID=robodojo_stack_bowls_v1 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 NPROC=8 PYTHON=$PY \
+nohup bash scripts/train_real_yam.sh $V $CACHE "${COMMON[@]}" \
+  max_steps=20000 save_every=5000 eval_every=1000 > train_robodojo_stack_bowls.log 2>&1 &
+```
+- Memory (tested on one d3 RTX 6000 Ada, 48 GB): batch 4 OOMs in the forward pass; batch 2×2 and batch 1 OOM at the first optimizer step (needs 2 × 12.29 GiB of Adam state on top of ~36 GB). One GPU cannot train the stock recipe at any batch size; ZeRO-1 needs about 3–4 or more 48 GB GPUs (8 as on r6000). A CPU-offload config was tried and reverted at your request
+- With a different machine, change `paths=r6000` to a paths file whose `pretrain_ckpt` points at the unpacked checkpoint (or pass `paths.pretrain_ckpt=<dir>/agenticwam_pretrain.pt`); `wan_vae`, `text_encoder`, `code_model` and `code_vision` must exist there too
+- d3: nvidia-smi index ≠ CUDA index; use `CUDA_VISIBLE_DEVICES=GPU-<uuid>`
+
+### Tarball `robodojo_aw0_stack_bowls.tar` (sent by magic-wormhole; code + data only, no weights)
+```
+robodojo_aw0_stack_bowls/
+├── README.md, train.sh, setup_env.sh      run: bash setup_env.sh (once), then bash train.sh
+├── agentic-wam/                           code: git archive HEAD + the RoboDojo changes, this CHOICES.md
+└── data/robodojo_x5_stack_bowls/          100 episodes, 44,774 frames, symlinks resolved
+    ├── train_shard_0/                     LeRobot v2.1 + subtasks.json (all 100 episodes)
+    ├── dataset_stats_eef64.json, episodes_0_94.json, episodes_95_99.json
+    ├── cosmos_text_embeds_cache/          the stack_bowls embedding
+    ├── policy_code_idx_robodojo_v1.pt     the full code-label cache
+    └── episode_order.json
+```
+The AW-0 checkpoint and the frozen models stay on the receiving machine. `train.sh` takes `PRETRAIN_CKPT`, `WAN_VAE`, `CODE_MODEL`, `CODE_VISION` (defaults: the `configs/paths/r6000.yaml` layout under `~/agentic-wam/checkpoints` and `~/models`), stops if one is missing, writes `agentic-wam/configs/paths/bundle.yaml` with only those 4 keys, and runs `train_real_yam.sh` with `paths=bundle`, the splits, `data.val.frame_offset=43524`, `model.infer_code_tokens=128`, 20k steps, save every 5k, eval every 1k. `DRY_RUN=1 bash train.sh` passes on the staged bundle
+
+Source of the bundle's top-level files: `scripts/robodojo_bundle/` (`train.sh`, `setup_env.sh`, `README.md`).
+
+### What the receiver does
+1. **Download and unpack.** Each send prints a new code; the current one is `24-narrative-enlist`
+   ```bash
+   wormhole receive <code>
+   tar -xf robodojo_aw0_stack_bowls.tar && cd robodojo_aw0_stack_bowls
+   ```
+2. **Python environment, once.** Skip if `~/venvs/agenticwam-data` already exists (e.g. the shared r6000/d3 home)
+   ```bash
+   bash setup_env.sh
+   ```
+   Needs Linux x86_64, an NVIDIA driver for CUDA 12.8, and internet access to PyPI, download.pytorch.org and GitHub. It installs `uv` if missing and the versions in `configs/env/agenticwam-data.freeze.txt`
+3. **Weights, not in the tar.** Export any that are not at the defaults (the `configs/paths/r6000.yaml` layout); `train.sh` stops and names a missing one
+   ```bash
+   export PRETRAIN_CKPT=/path/to/agenticwam_pretrain.pt   # default ~/agentic-wam/checkpoints/agentic-wam-pretrain-yamego3k-soup-e1/agenticwam_pretrain.pt (HF miniFranka/agentic-wam-pretrain-yamego3k-soup-e1)
+   export WAN_VAE=/path/to/Wan2.2_VAE.pth                  # default ~/models/Wan2.2-TI2V-5B/Wan2.2_VAE.pth (HF Wan-AI/Wan2.2-TI2V-5B)
+   export CODE_MODEL=/path/to/SDAR-1.7B-Chat-tok           # default ~/models/SDAR-1.7B-Chat-tok: config + tokenizer + modeling_sdar.py with the LossKwargs patch (above)
+   export CODE_VISION=/path/to/Qwen3-VL-2B-Instruct        # default ~/models/Qwen3-VL-2B-Instruct (HF Qwen/Qwen3-VL-2B-Instruct)
+   ```
+4. **Preflight.** Every line `[ok]` except two expected warnings: `code cache train: … cache is longer (44,774)` and `gpus skipped`
+   ```bash
+   DRY_RUN=1 bash train.sh
+   ```
+5. **Launch** on ≥ 4 free 48 GB GPUs, ideally 8 (one GPU runs out of memory at any batch size)
+   ```bash
+   export WANDB_API_KEY=...        # optional; without it W&B logs offline
+   CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 nohup bash train.sh > train.log 2>&1 &
+   ```
+   With 4 GPUs: `NPROC=4 bash train.sh gradient_accumulation_steps=2` keeps the effective batch at 32 (4 per GPU × GPUs × accumulation). Extra Hydra overrides go after `train.sh`
+6. **Watch it.**
+   - `train.log` shows `transferred N/N tensors` (AW-0 loaded), then step lines with a finite, falling loss
+   - Checkpoints every 5k steps land in `agentic-wam/runs/posttrain_yam_robodojo_x5_stack_bowls/robodojo_stack_bowls_v1/checkpoints/weights/step_XXXXXX.pt`
+   - Validation loss every 1k steps on episodes 95–99. Pick the checkpoint where it bottoms out, not the last one
+7. **Resume.** Only weights are saved, so a resume restarts the optimizer state
+   ```bash
+   RUN_ID=robodojo_stack_bowls_v1 nohup bash train.sh resume=<path/to/step_XXXXXX.pt> > train_resume.log 2>&1 &
+   ```
+8. **If the first real launch fails loading a tokenizer or processor:** `train.sh` points `HF_HOME` at an empty folder in the bundle (only the dry run was tested there), so rerun with `HF_HOME=~/.cache/huggingface bash train.sh`
+
+## Full stack_bowls labeling (2026-11-03)
+- Settings unchanged from the pilot (training view, 8 s max span, `yam` library, Stage 1 only)
+- `annotate_subtasks_gripper.py`: `--workers` now parallelises **episodes** inside a shard (it used to parallelise shards, so a one-shard view ran one episode at a time), and `subtasks.json` is saved after every episode. Before this, a stopped run lost everything it had paid for: two stops lost episodes 5–23 (~110 calls) and 5–6 (~13 calls). The old shard-level pool is left commented
+- Bundle for the receiver: `robodojo_aw0_stack_bowls.tar` with `train.sh` (the launch command, all paths inside the bundle), `setup_env.sh` (venv from `configs/env/agenticwam-data.freeze.txt`), the code (`git archive HEAD` + the RoboDojo changes), the dataset with the full code cache, AW-0, and the frozen models (Wan2.2 VAE, Qwen3-VL-2B, SDAR config/tokenizer with the patched modeling file). Cosmos-Reason1 is left out (the embedding is precomputed)
+- Results (2026-11-03): 100/100 episodes; subtasks 599 calls for episodes 5–99 (617 slices in total); label round r2: 82/95 fully reconciled. Over all 617 slices: **matched_raw 0.752, repaired_share 0.217** (pilot 0.61 / 0.35; T-Rex 0.18 / 0.34)
+- Cache `data_local/robodojo_x5_stack_bowls/policy_code_idx_robodojo_v1.pt` (+ `episode_order.json`): 100 episodes, 44,774 frames, 204 codes (id 0 = ""), 0 missing, 0 frames without code; `verify` ALIGNED. Comments kept verbatim
+- Code length in SDAR tokens: per frame p50 13, p95 93, p99 261, max 343 (the long tail is low-level detect/sample-grasp/move programs plus auto-repaired gripper lines). `model.infer_code_tokens=128`, as for T-Rex: truncates 28 of 204 codes, 4.7% of frames, at inference only (training reads up to `max_code_tokens` 512)
+- **Val split needs `data.val.frame_offset`.** The loader reads `code_id_by_idx[frame_offset + idx]` with `idx` the position inside the selected episodes, not a global frame. Train episodes 0–94 are the cache's first 43,524 frames, so offset 0 is right for train; val episodes 95–99 start at 43,524, so `data.val.frame_offset=43524` (without it val silently reads episode 0's labels; with it the preflight reports "val … covers 1,250 frames (offset 43,524)", and its remaining train warning "cache is longer (44,774)" is expected). The T-Rex command above (val = episodes 100–199, no `frame_offset`) has the same pattern, so its val code labels were probably episodes 0–99's; its val loss is worth re-checking
+
+## RoboDojo sim evaluation (2026-11-04)
+Checkpoints: HF `xinyuan-eval/robodojo-stack-bowls`, `step{5000,10000,15000,20000}/model.pt` (~10 GB each), post-trained with the command above.
+
+**Pieces** (source in agentic-wam; `deploy/robodojo/README.md` has the details)
+- `utils/x5_kinematics.py`: the X5 chain (X5A.urdf joint1–6 → link6), FK, geometric Jacobian, damped-least-squares IK. The converter now imports its FK from here, so training data and serving share one model
+- `deploy/common/x5_eef64.py`: the `yam_eef64.py` interface for the X5. `state14_to_82` (FK in) and `decode_chunk` (each row anchored at the chunk-start pose, IK seeded with the previous row). Registered as `embodiment="x5"` in `deploy/common/policy_runtime.py` (same `YamUnifiedEEFTransform`)
+- `deploy/robodojo/AgenticWAM/`: the XPolicyLab policy. `install.sh` symlinks it to `RoboDojo/XPolicyLab/policy/AgenticWAM` and adds the websocket server deps (websockets, msgpack, msgpack-numpy, pydantic, h5py) to `~/venvs/agenticwam-data`
+  - Images: sim `cam_head`/`cam_left_wrist`/`cam_right_wrist` 480×640 → rows 16:464 → area-resize 224×320 (the training crop) → `head_camera`/`left_camera`/`right_camera`
+  - State: `pack_robot_state(..., "joint")` = `[L arm 6, L grip, R arm 6, R grip]`, the converter's input order
+  - Action: `action_type=joint`; 24 of the 32 predicted rows per chunk, absolute joints, grippers clipped to 0–1. The sim's joint action normalises the gripper with the inverse of its observation mapping (`src/eval_client/eval_env.py` vs `env/observation_manager/obs_manager.py`), so the training gripper values (1 = open) pass through unchanged
+  - Instruction fixed to "Stack the three bowls together." (the dataset's only task string); stats from `data_local/robodojo_x5_stack_bowls/dataset_stats_eef64.json`; `infer_code_tokens` 128, 6 denoising steps, the `launch_server.sh` env defaults (bf16, fast joint, code pin, noise seed 1234)
+- Joint targets rather than RoboDojo's `ee` action: `ee` wants a world-frame gripper pose, while the model predicts link6 in each arm's base frame
+
+**Checks**
+- Bridge on stack_bowls episode 3 (366 frames): `state14_to_82` equals the stored training state exactly (max error 0.0) and equals the converter's `pack82`. Joints → delta64 → `decode_chunk` over 14 chunks: 0 IK failures, max position error 0.1 mm, max joint error 2.4 mrad, 47 ms per 32-row chunk
+- `RoboDojo/XPolicyLab` was an incomplete submodule checkout (`utils/`, `scripts/`, `setup_policy_server.py`, `pyproject.toml` missing; FastWAM could not have run either). Restored with `git -C RoboDojo/XPolicyLab checkout HEAD -- utils scripts setup_policy_server.py pyproject.toml`
+- The adapter loads `deploy/common` under the package name `agenticwam_deploy_common`: inside the XPolicyLab server `deploy` is already a module (the policies' `deploy.py`)
+
+**Run**
+```bash
+cd ~/agentic-wam
+bash deploy/robodojo/install.sh                                         # once
+hf download xinyuan-eval/robodojo-stack-bowls --local-dir checkpoints/robodojo-stack-bowls
+cd RoboDojo/XPolicyLab/policy/AgenticWAM
+# eval.sh <bench> <task> <ckpt_name> <env_cfg> <action_type> <seed> <policy_gpu> <env_gpu> <policy_env> <sim_conda_env>
+EVAL_NUM=1 bash eval.sh RoboDojo stack_bowls step15000 arx_x5 joint 0 0 0 ~/venvs/agenticwam-data RoboDojo
+for s in 5000 10000 15000 20000; do
+  bash eval.sh RoboDojo stack_bowls step$s arx_x5 joint 0 0 0 ~/venvs/agenticwam-data RoboDojo > eval_step$s.log 2>&1
+done
+```
+- `ckpt_name`: a name under `checkpoints/robodojo-stack-bowls` (`<name>/model.pt`), an absolute `.pt`, or a training run dir (newest `step_*.pt`). `EVAL_NUM` caps the episode count. Results and videos: `RoboDojo/eval_result/RoboDojo/stack_bowls/AgenticWAM/arx_x5/`
+- d3: pass GPUs as `GPU-<uuid>` (nvidia-smi index ≠ CUDA index)
+- **Omniverse EULA.** Isaac Sim asks "Do you accept the EULA? (Yes/No)" on first start; in a non-interactive run it reads EOF and the client exits ("Unable to bootstrap inner kit kernel"). Accept it once interactively, or run with `OMNI_KIT_ACCEPT_EULA=YES` if you accept the NVIDIA Omniverse license
+- Smoke run (d3, GPU 6, step15000, 2026-11-04): the policy server loads the checkpoint, warms up (104 s) and reports ready; the sim client stopped at the EULA prompt, so no episode has run yet. Whether model + Cosmos-Reason1-7B + the sim fit on one 48 GB GPU is not yet tested

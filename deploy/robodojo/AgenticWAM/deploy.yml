@@ -1,0 +1,25 @@
+policy_name: AgenticWAM
+protocol: ws
+eval_batch: false
+
+# Server transport + per-launch wiring: set by setup_eval_policy_server.sh via --overrides.
+port: null
+host: localhost
+bench_name: null
+task_name: null
+ckpt_name: null
+env_cfg_type: null
+action_type: null
+action_dim: null
+seed: null
+checkpoint_path: null     # resolved from ckpt_name (setup_eval_policy_server.sh)
+dataset: null             # the training dataset dir: dataset_stats_eef64.json (normalisation), as in training
+
+# Model / serving. Must match the training run.
+task: posttrain_yam       # configs/real_post_train/task
+paths: r6000              # configs/paths/<name>.yaml: text_encoder (Cosmos-Reason1-7B), wan_vae, code_model, code_vision
+infer_code_tokens: 128    # = the training run's model.infer_code_tokens
+instruction: "Stack the three bowls together."   # the dataset's one task string (meta/tasks.jsonl)
+num_inference_steps: 6    # denoising steps (deploy/launch_server.sh default)
+replan_steps: 24          # rows executed per chunk, of the 32 predicted (~1 s at 25 Hz)
+verbose: true

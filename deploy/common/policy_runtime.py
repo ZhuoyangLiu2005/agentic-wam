@@ -45,6 +45,11 @@ _EMBODIMENTS = {
     "sharpa": {"transform_suffix": "TianjiSharpaUnifiedEEFTransform",
                "bridge": "vega_eef64", "state_to_raw_attr": "state58_to_raw76",
                "client_action_dim": 58, "action_space_label": "vega_eef64", "image_preproc": "sharpa"},
+    # RoboDojo sim dual ARX X5: the YAM 82-D layout with X5 FK (utils/convert_robodojo_v21_to_yam82.py), served by
+    # XPolicyLab/policy/AgenticWAM (deploy/robodojo/AgenticWAM), which hands over frames already cropped to 224x320.
+    "x5":     {"transform_suffix": "YamUnifiedEEFTransform",
+               "bridge": "x5_eef64", "state_to_raw_attr": "state14_to_82",
+               "client_action_dim": 14, "action_space_label": "x5_eef64", "image_preproc": None},
 }
 
 
