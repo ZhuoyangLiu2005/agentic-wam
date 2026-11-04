@@ -633,5 +633,17 @@ done
 ```
 - `ckpt_name`: a name under `checkpoints/robodojo-stack-bowls` (`<name>/model.pt`), an absolute `.pt`, or a training run dir (newest `step_*.pt`). `EVAL_NUM` caps the episode count. Results and videos: `RoboDojo/eval_result/RoboDojo/stack_bowls/AgenticWAM/arx_x5/`
 - d3: pass GPUs as `GPU-<uuid>` (nvidia-smi index ≠ CUDA index)
-- **Omniverse EULA.** Isaac Sim asks "Do you accept the EULA? (Yes/No)" on first start; in a non-interactive run it reads EOF and the client exits ("Unable to bootstrap inner kit kernel"). Accept it once interactively, or run with `OMNI_KIT_ACCEPT_EULA=YES` if you accept the NVIDIA Omniverse license
-- Smoke run (d3, GPU 6, step15000, 2026-11-04): the policy server loads the checkpoint, warms up (104 s) and reports ready; the sim client stopped at the EULA prompt, so no episode has run yet. Whether model + Cosmos-Reason1-7B + the sim fit on one 48 GB GPU is not yet tested
+- **Omniverse EULA.** Isaac Sim asks "Do you accept the EULA? (Yes/No)" on first start; a non-interactive run reads EOF and the client exits ("Unable to bootstrap inner kit kernel"). Accepted (your go-ahead, 2026-11-04) by running with `OMNI_KIT_ACCEPT_EULA=YES`
+- **Sim GPU must be an integer.** `src/eval_client/main.py` parses `--device_id` as int (and `eval_policy.sh` exports it as `CUDA_VISIBLE_DEVICES`), so `env_gpu` cannot be a UUID; the policy GPU can. On d3 the broken GPU 4 is skipped by CUDA: nvidia-smi 0–3 = CUDA 0–3, nvidia-smi 5/6/7 = CUDA 4/5/6. GPU 6 is `5`
+- **RoboDojo setup step** `python utils/update_embodiment_config_path.py` (from `RoboDojo/`, RoboDojo env) had never been run: without it `Assets/Robots/x5/curobo.yml` is missing and the env crashes building the planner. It writes `curobo.yml` from `curobo_tmp.yml` with the Assets path
+- **Smoke run (d3, GPU 6, step15000, 1 episode, 2026-11-04): ran end to end, failed, score 0.15.** First chunk 117 s (compile on the first real call), then ~0.4 s per chunk; 34 chunks for the 800-step limit; 0 IK failures. Policy + Cosmos-Reason1-7B + the sim share one 48 GB GPU at 40.9 GB. Head camera: the right arm grasps the right bowl and puts it on the middle one within the first ~6 rendered frames, then hovers and re-grasps around the middle; the left arm never moves. Result `RoboDojo/eval_result/RoboDojo/stack_bowls/AgenticWAM/arx_x5/0_ckpt_name=step15000,action_type=joint/2026-11-04_21-04-21/`. One episode says nothing about the success rate
+
+**Run on d3**
+```bash
+cd ~/agentic-wam/RoboDojo/XPolicyLab/policy/AgenticWAM
+export OMNI_KIT_ACCEPT_EULA=YES
+G=GPU-c5a0726a-572f-0170-4b94-1a62b2376c64      # nvidia-smi 6 for the policy; the sim takes CUDA index 5 (same GPU)
+for s in 5000 10000 15000 20000; do
+  bash eval.sh RoboDojo stack_bowls step$s arx_x5 joint 0 $G 5 ~/venvs/agenticwam-data RoboDojo > eval_step$s.log 2>&1
+done
+```

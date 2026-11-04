@@ -30,8 +30,11 @@ done
 
 * `ckpt_name`: a name under `$AGENTICWAM_CKPT_ROOT` (default `checkpoints/robodojo-stack-bowls`, read as
   `<name>/model.pt`), an absolute `.pt`, or an absolute training run dir (newest `step_*.pt`).
-* `action_type` must be `joint`: the server solves IK itself. GPUs can be indices or `GPU-<uuid>`; the policy
-  (model + Cosmos-Reason1-7B text encoder) and the sim fit on one 48 GB GPU.
+* `action_type` must be `joint`: the server solves IK itself. The policy GPU can be an index or `GPU-<uuid>`; the sim
+  GPU must be an integer CUDA index (`main.py --device_id` is an int). The policy (model + Cosmos-Reason1-7B text
+  encoder) and the sim fit on one 48 GB GPU (40.9 GB measured).
+* RoboDojo setup: run `python utils/update_embodiment_config_path.py` once from `RoboDojo/` (writes
+  `Assets/Robots/x5/curobo.yml`; without it the sim crashes building the planner).
 * `EVAL_NUM=<n>` caps the episode count (default: the task's own count). Results and videos:
   `RoboDojo/eval_result/RoboDojo/stack_bowls/AgenticWAM/arx_x5/...`.
 * Env: `AGENTICWAM_DATASET` (training dataset dir, default `data_local/robodojo_x5_stack_bowls`: its
