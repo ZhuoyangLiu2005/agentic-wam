@@ -8,7 +8,8 @@
 #   <name>                                  $AGENTICWAM_CKPT_ROOT/<name>/model.pt  (the HF layout: step15000/model.pt)
 # policy_conda_env: a venv/conda prefix (has bin/python, e.g. ~/venvs/agenticwam-data) or a conda env name.
 # Env: AGENTICWAM_CKPT_ROOT (default <agentic-wam>/checkpoints/robodojo-stack-bowls),
-#      AGENTICWAM_DATASET   (default <agentic-wam>/data_local/robodojo_x5_stack_bowls; the training dataset dir),
+#      AGENTICWAM_DATASET   (a dir with the training run's dataset_stats_eef64.json; default data_local/robodojo_x5_stack_bowls,
+#                            else deploy/robodojo/stats/stack_bowls),
 #      AGENTICWAM_PATHS     (default r6000; configs/paths/<name>.yaml), AGENTICWAM_NIS, AGENTICWAM_REPLAN,
 #      AGENTICWAM_INSTRUCTION (default deploy.yml: the stack_bowls string), AGENTICWAM_INFER_CODE_TOKENS (default 128).
 set -euo pipefail
@@ -46,7 +47,11 @@ if [[ ! -f "${checkpoint_path:-}" ]]; then
     echo "[SERVER] download one: hf download xinyuan-eval/robodojo-stack-bowls step15000/model.pt --local-dir ${ckpt_root}" >&2
     exit 2
 fi
-dataset="${AGENTICWAM_DATASET:-${AGENTICWAM_ROOT}/data_local/robodojo_x5_stack_bowls}"
+# The server reads only <dataset>/dataset_stats_eef64.json. Default: the local training view if present, else the
+# stack_bowls stats shipped in deploy/robodojo/stats/stack_bowls (a fresh clone has no data_local/).
+default_dataset="${AGENTICWAM_ROOT}/data_local/robodojo_x5_stack_bowls"
+[[ -f "${default_dataset}/dataset_stats_eef64.json" ]] || default_dataset="${AGENTICWAM_ROOT}/deploy/robodojo/stats/stack_bowls"
+dataset="${AGENTICWAM_DATASET:-${default_dataset}}"
 paths_cfg="${AGENTICWAM_PATHS:-r6000}"
 
 if [[ -x "${policy_conda_env}/bin/python" ]]; then

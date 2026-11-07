@@ -1,0 +1,56 @@
+diff --git a/src/eval_client/eval_env.py b/src/eval_client/eval_env.py
+index d2af1c0..b2e1c6f 100644
+--- a/src/eval_client/eval_env.py
++++ b/src/eval_client/eval_env.py
+@@ -118,6 +118,10 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+             # Replaces the old full-episode frame cache; only vision frames are
+             # streamed to disk as they arrive instead of buffered in RAM.
+             self.video_writers: dict[int, dict[str, VideoStreamWriter]] = {}
++            # ROBODOJO_VIDEO_EVERY_STEP=1: record one frame per control step
++            # (real-time playback at collect_freq) instead of one per policy call.
++            self.video_every_step = os.environ.get("ROBODOJO_VIDEO_EVERY_STEP", "").strip().lower() not in (
++                "", "0", "false", "no", "off")
+             self.episode_nums = self.num_envs
+             self.unstable_nums = 0
+             self.unstable_envs: set[int] = set()
+@@ -277,7 +281,11 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+             data = self.obs_manager.get_obs(env_idx_list=env_idx_list)
+             data_list = []
+             for env_idx in env_idx_list:
+-                if not self.end_flag[env_idx] or last_frame:
++                # In every-step mode take_action_batch already wrote this frame;
++                # only the first frame of the episode comes from here.
++                if self.video_every_step and env_idx in self.video_writers:
++                    pass
++                elif not self.end_flag[env_idx] or last_frame:
+                     self._stream_vision(env_idx, data[env_idx])
+                 env_data = deepcopy(data[env_idx])
+                 env_data["env_idx"] = env_idx
+@@ -359,6 +367,7 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+             if self.physx_monitor_enabled:
+                 self._check_physx_broken_envs()
+             control_info_list = []
++            acted_env_idx = []
+             if env_idx_list is None:
+                 env_idx_list = list(range(self.num_envs))
+             for idx, env_idx in enumerate(env_idx_list):
+@@ -369,6 +378,7 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+                     continue
+ 
+                 self.take_action_cnt[env_idx] += 1
++                acted_env_idx.append(env_idx)
+                 print(
+                     f"env{env_idx} step: \033[92m{self.take_action_cnt[env_idx]} / {self.step_lim}\033[0m",
+                     end="\r",
+@@ -453,6 +463,11 @@ def create_eval_env(config, app, resume_state=None, **kwargs):
+                     if self.physx_monitor_enabled:
+                         self._check_physx_broken_envs()
+                         self._check_endpose_finite(env_idx_list)
++                if self.video_every_step and acted_env_idx:
++                    self.obs_manager.render_for_capture()
++                    data = self.obs_manager.get_obs(env_idx_list=acted_env_idx)
++                    for env_idx in acted_env_idx:
++                        self._stream_vision(env_idx, data[env_idx])
+ 
+             self.reward_manager.step(env_idx_list=env_idx_list)
+             if getattr(self, "interact", False):

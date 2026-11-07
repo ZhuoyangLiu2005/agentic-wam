@@ -171,6 +171,8 @@ continue to §6.
 
 ## 6. Closed-loop sim eval (Isaac Sim, one GPU)
 
+User-facing guide for this stage, including setup from a fresh clone: [docs/ROBODOJO_EVAL.md](../../../docs/ROBODOJO_EVAL.md).
+
 Once per machine:
 - `bash deploy/robodojo/install.sh`
 - `cd RoboDojo && python utils/update_embodiment_config_path.py` in the RoboDojo conda env. It writes

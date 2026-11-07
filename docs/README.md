@@ -10,6 +10,7 @@ Start with the guide for what you are doing.
 | [CODE_ANNOTATION.md](CODE_ANNOTATION.md) | policy-code labels for real-robot data — the VLM labeling pipeline or your own task program — and how they reach training |
 | [REALWORLD.md](REALWORLD.md) | the real robots, YAM and Tianji + Sharpa: hardware, data, post-training, and running a checkpoint on YAM (inference server, robot contract, evaluation) |
 | [ROBOTWIN.md](ROBOTWIN.md) | everything in RoboTwin simulation: code-labeled data collection (`codegen/sim`), training data and stage slicing, training, WAM evaluation, the hybrid code × WAM evaluation and its rollout viewer, model variants |
+| [ROBODOJO_EVAL.md](ROBODOJO_EVAL.md) | evaluating a RoboDojo-trained checkpoint in the RoboDojo simulator (dual ARX X5, Isaac Sim): setup from a fresh clone, `eval.sh`, RTC and logging options, results and analysis tools |
 
 Module-level docs live with their code: `codegen/sim/{README,SETUP,CLAUDE}.md` (the simulation collection engine),
 `codegen/pretrain/pipeline/` (the labeling engine; its config templates are `configs/{yam,ego}.yaml`),
