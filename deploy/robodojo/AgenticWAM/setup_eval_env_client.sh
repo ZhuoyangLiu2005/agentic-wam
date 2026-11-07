@@ -26,8 +26,11 @@ echo -e "\033[34m[CLIENT] server=${policy_server_ip}:${policy_server_port}\033[0
 
 # Scope CUDA to this client process; setup_env_client.sh dispatches debug / sim
 # based on EVAL_ENV_TYPE (default: sim).
+# One video frame per control step (real-time 25 fps playback); set
+# ROBODOJO_VIDEO_EVERY_STEP=0 to go back to one frame per policy call.
 exec env \
     CUDA_VISIBLE_DEVICES="${env_gpu_id}" \
+    ROBODOJO_VIDEO_EVERY_STEP="${ROBODOJO_VIDEO_EVERY_STEP:-1}" \
     bash "${UTILS_DIR}/setup_env_client.sh" \
         "${UTILS_DIR}" \
         "${yaml_file}" \

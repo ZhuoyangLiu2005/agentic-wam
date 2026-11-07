@@ -9,7 +9,8 @@
 # policy_conda_env: a venv/conda prefix (has bin/python, e.g. ~/venvs/agenticwam-data) or a conda env name.
 # Env: AGENTICWAM_CKPT_ROOT (default <agentic-wam>/checkpoints/robodojo-stack-bowls),
 #      AGENTICWAM_DATASET   (default <agentic-wam>/data_local/robodojo_x5_stack_bowls; the training dataset dir),
-#      AGENTICWAM_PATHS     (default r6000; configs/paths/<name>.yaml), AGENTICWAM_NIS, AGENTICWAM_REPLAN.
+#      AGENTICWAM_PATHS     (default r6000; configs/paths/<name>.yaml), AGENTICWAM_NIS, AGENTICWAM_REPLAN,
+#      AGENTICWAM_INSTRUCTION (default deploy.yml: the stack_bowls string), AGENTICWAM_INFER_CODE_TOKENS (default 128).
 set -euo pipefail
 
 bench_name=$1
@@ -64,6 +65,8 @@ echo -e "\033[33m[SERVER] host=${policy_server_host} port=${policy_server_port} 
 extra=()
 [[ -n "${AGENTICWAM_NIS:-}" ]] && extra+=(num_inference_steps="${AGENTICWAM_NIS}")
 [[ -n "${AGENTICWAM_REPLAN:-}" ]] && extra+=(replan_steps="${AGENTICWAM_REPLAN}")
+[[ -n "${AGENTICWAM_INSTRUCTION:-}" ]] && extra+=(instruction="${AGENTICWAM_INSTRUCTION}")   # the dataset's task string
+[[ -n "${AGENTICWAM_INFER_CODE_TOKENS:-}" ]] && extra+=(infer_code_tokens="${AGENTICWAM_INFER_CODE_TOKENS}")
 
 exec env \
     PYTHONWARNINGS=ignore::UserWarning \

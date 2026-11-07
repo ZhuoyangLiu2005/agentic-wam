@@ -77,3 +77,6 @@ configs/paths/*.yaml
 
 # user API key (r6000)
 API-key.txt
+
+# Self-contained eval replay page (videos embedded, ~84 MB); also covered by runs/ above
+runs/stack_bowls_eval_replay/stack_bowls_eval_replay.html

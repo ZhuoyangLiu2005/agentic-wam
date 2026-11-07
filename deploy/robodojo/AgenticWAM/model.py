@@ -9,6 +9,7 @@ Observation -> model, exactly as utils/convert_robodojo_v21_to_yam82.py built th
         -> head_camera / left_camera / right_camera (the training order cam_high, cam_left_wrist, cam_right_wrist)
     state [L arm 6, L gripper, R arm 6, R gripper] (pack_robot_state, joint)
 """
+import json
 import os
 import sys
 from pathlib import Path
@@ -75,8 +76,9 @@ class Model(ModelTemplate):
         if _none_like(dataset) or not (Path(str(dataset)) / "dataset_stats_eef64.json").is_file():
             raise FileNotFoundError(f"dataset={dataset!r} must be the training dataset dir (dataset_stats_eef64.json)")
 
-        # The serving defaults of deploy/launch_server.sh.
-        for k, v in (("AGENTICWAM_DEPLOY_DTYPE", "bf16"), ("AGENTICWAM_FAST_JOINT", "1"), ("AGENTICWAM_CODE_PIN", "1"),
+        # The serving defaults of deploy/launch_server.sh, except CODE_PIN: the program is regenerated every
+        # replan here, matching training, where the code label changes with each subtask. Set it to 1 to pin.
+        for k, v in (("AGENTICWAM_DEPLOY_DTYPE", "bf16"), ("AGENTICWAM_FAST_JOINT", "1"), ("AGENTICWAM_CODE_PIN", "0"),
                      ("AGENTICWAM_NOISE_SEED", "1234"), ("HF_HUB_OFFLINE", "1"), ("TRANSFORMERS_OFFLINE", "1"),
                      ("DIFFSYNTH_DOWNLOAD_SOURCE", "huggingface"),
                      ("TORCHINDUCTOR_CACHE_DIR", str(AGENTICWAM_ROOT / ".torchinductor_cache_deploy"))):
@@ -96,6 +98,7 @@ class Model(ModelTemplate):
               flush=True)
         self.last = None
         self.n_chunks = 0
+        self.n_episodes = -1
 
     def _encode(self, obs):
         images = {dst: training_view(obs["vision"][src]["color"]) for src, dst in CAMERAS}
@@ -112,11 +115,32 @@ class Model(ModelTemplate):
         if enc is None:
             raise ValueError("call update_obs() before get_action()")
         images, state = enc
-        chunk, code, infer_ms = self.rt.infer(images, state, self.instruction)
+        # AGENTICWAM_RTC=1: inference-only RTC. The previous chunk's unexecuted rows (replan_steps..end) are the
+        # committed start of this chunk; the sim blocks during inference, so nothing executes meanwhile and the
+        # hard-freeze prefix defaults to 0 (AGENTICWAM_RTC_FREEZE) -- all committed rows are soft-guided.
+        rtc = os.environ.get("AGENTICWAM_RTC", "0") not in ("", "0") and getattr(self, "_rtc_tail", None) is not None
+        kw = dict(committed=self._rtc_tail, freeze=int(os.environ.get("AGENTICWAM_RTC_FREEZE", "0"))) if rtc else {}
+        guided0 = getattr(self.rt, "n_rtc_guided", 0)
+        chunk, code, infer_ms = self.rt.infer(images, state, self.instruction, **kw)
+        guided = getattr(self.rt, "n_rtc_guided", 0) > guided0
+        full = np.asarray(chunk, np.float64)
+        self._rtc_tail = full[self.replan_steps:].copy() if len(full) > self.replan_steps else None
         chunk = np.asarray(chunk[: self.replan_steps], np.float32)
         chunk[:, 6] = np.clip(chunk[:, 6], 0.0, 1.0)
         chunk[:, 13] = np.clip(chunk[:, 13], 0.0, 1.0)
         self.n_chunks += 1
+        code_log = os.environ.get("AGENTICWAM_CODE_LOG")
+        if code_log:  # opt-in: full program per chunk, one JSON line each, for offline overlays
+            with open(code_log, "a") as f:
+                f.write(json.dumps({"episode": self.n_episodes, "chunk": self.n_chunks,
+                                    "infer_ms": round(float(infer_ms), 1), "rtc": bool(guided),
+                                    "code": code}) + "\n")
+        state_log = os.environ.get("AGENTICWAM_STATE_LOG")
+        if state_log:  # opt-in: 14-D joint state the model saw + the executed 14-D targets, per chunk
+            with open(state_log, "a") as f:
+                f.write(json.dumps({"episode": self.n_episodes, "chunk": self.n_chunks,
+                                    "state": np.round(state, 6).tolist(),
+                                    "targets": np.round(chunk, 6).tolist()}) + "\n")
         if self.verbose:
             first = (code or "").strip().splitlines()[:1]
             print(f"[AgenticWAM] chunk {self.n_chunks}: {infer_ms:.0f} ms, ik_failures(total)={self.rt.ik_failures}"
@@ -130,7 +154,9 @@ class Model(ModelTemplate):
         return [self._act(self._batch[int(i)]) for i in env_idx_list]
 
     def reset(self):
+        self.n_episodes = getattr(self, "n_episodes", -1) + 1
         self.last = None
         self.n_chunks = 0
+        self._rtc_tail = None          # RTC never carries a plan across episodes
         self.rt.ik_failures = 0
         self.rt.reset()

@@ -647,3 +647,70 @@ for s in 5000 10000 15000 20000; do
   bash eval.sh RoboDojo stack_bowls step$s arx_x5 joint 0 $G 5 ~/venvs/agenticwam-data RoboDojo > eval_step$s.log 2>&1
 done
 ```
+
+## RoboDojo sim evaluation: diagnosis, RTC, comparison page (2026-11-05, d3 GPU 6)
+
+### Inference settings chosen
+- **Program regenerated every replan** (your call). `AGENTICWAM_CODE_PIN` defaults to `0` in `deploy/robodojo/AgenticWAM/model.py` (was `1`, inherited from `deploy/launch_server.sh` for the real robot). `policy_runtime._code_pin_on()` now treats unset, `""`, `0`, `false`, `no`, `off` as off; before, any non-empty value (including `"0"`) turned pinning on
+```diff
+-        for k, v in (("AGENTICWAM_DEPLOY_DTYPE", "bf16"), ("AGENTICWAM_FAST_JOINT", "1"), ("AGENTICWAM_CODE_PIN", "1"),
++        for k, v in (("AGENTICWAM_DEPLOY_DTYPE", "bf16"), ("AGENTICWAM_FAST_JOINT", "1"), ("AGENTICWAM_CODE_PIN", "0"),
+```
+- Replan every 24 control steps (~1 s at 25 Hz), 32-row chunks, 6 denoise steps, 34 policy calls per 800-step episode, `infer_code_tokens=128`
+- **Every eval runs 5 episodes** (`EVAL_NUM=5`, your call, 2026-11-05), layouts 0–4 of `Assets/Eval_Layout/RoboDojo/arx_x5/0/`
+- **Real-time eval video** (your call). `ROBODOJO_VIDEO_EVERY_STEP=1` in `RoboDojo/src/eval_client/eval_env.py` records one frame per control step (801 frames, 32 s at 25 fps) instead of one per policy call (35 frames played in 1.4 s, which made the arm look ~24× too fast). Off by default in RoboDojo; `deploy/robodojo/AgenticWAM/setup_eval_env_client.sh` turns it on for AgenticWAM. `eval_env.py` is RoboDojo's eval client, so upstreaming it is a RoboDojo change
+- **Opt-in logs** in `model.py`: `AGENTICWAM_CODE_LOG` (full program per call, plus `rtc`), `AGENTICWAM_STATE_LOG` (14-D state the model saw + the 24 executed targets per call)
+
+### RTC for the X5 (added 2026-11-05)
+- `policy_runtime._rtc_stage` accepted only embodiment `yam`; it now also accepts `x5` (`x5_eef64.joints_to_delta64` has the same signature)
+```diff
+-        if (not (self.unified_eef and self.fast_joint and self.embodiment == "yam")
++        if (not (self.unified_eef and self.fast_joint and self.embodiment in ("yam", "x5"))
+```
+- `model.py`, `AGENTICWAM_RTC=1`: each call passes the previous chunk's unexecuted rows 24–31 as `committed`; they guide the new chunk's first 8 rows. `AGENTICWAM_RTC_FREEZE` defaults to `0` (the sim blocks during inference, so nothing executes meanwhile); soft weights 0.8 → 0. The tail is cleared at every reset. Off unless set
+
+### Checks (all on step20000, `checkpoints/robodojo-stack-bowls/step20000/model.pt`)
+- **Image pipeline matches training.** Same source frames through both paths (`pipeline_compare.py`, session scratchpad, not in the repo): crop rows 16:464 → 224×320 area resize on both sides, the stage-2 resize/crop are no-ops, same [-1, 1] normalisation. Final input differs by 0.014–0.018 mean abs (under 1% of range), almost all from the training videos' H.264 re-encode
+- **Action labels use the ARX X5.** `Assets/Robots/x5/robot_config.yml` names `X5A.urdf`, `base_link` → `link6`; `utils/x5_kinematics.X5_CHAIN` matches an FK parsed from that URDF to 0.0 mm / 4e-6°. Stored poses = FK(stored joints) to 3e-5 mm; `action[t] == state[t+1]`; the training delta label equals `joints_to_delta64` to 8e-8; `decode_chunk` on the true labels: 115,104 rows, 0 IK failures, 0.011 mm mean / 0.1 mm max (`fk_ik_check.py`, session scratchpad, not in the repo). Not checked: that the sim's `ARX.usd` reports the same EE pose as URDF FK
+- **Bowl type is not the cause.** 8 bowl models (teal 1/2, black 3, green 5, white 7/8/10); success does not track how often a colour appears in training (teal: 39 training episodes, 4/8 eval stacks; black: 20, 3/3)
+- **No memory anywhere.** step20000 and the pretrained `agentic-wam-pretrain-yamego3k-soup-e1/agenticwam_pretrain.pt` both have `code_memory: false` and 0 memory weights; no history in the code prompt; the action expert sees the noisy future chunk, the text and one proprio token (current EEF state). Each call depends only on the current three frames, current state and the instruction
+- **Generated code drifts from the training labels.** Training: `robot.place(` on 39% of frames, `detect_objects_oneshot` on 4%. Eval (850 calls): place 11%, detect 17%, `approach_best_grasp` 35%, much of it garbled. 28 of the 204 training programs exceed 128 tokens
+- **Robot state (eval episode 0):** tracking is tight (≤ 0.011 rad), gripper scale matches (1 open, 0 closed). Right arm: from call 6 it alternates lower + close (z ≈ 190 mm) / lift + open (z ≈ 215 mm) on every replan, the repeated hitting. Left arm: IK from the all-zero home pose (near-singular, Jacobian σ 0.21 / 0.05 / 0.04) reaches small targets by swinging q1 and q3 with the elbow q2 ≈ 0; q2 < 0.1 with q1 > 0.5 occurs in 0 of 43,524 training frames. Nearest-training-state distance p95: 3.01 vs 1.13 for a held-out training episode
+
+### Results
+25 episodes, step20000:
+
+| Code at inference | Successes | Episodes at 0.15 | Score |
+|---|---|---|---|
+| Pinned at the first call | 0/25 | 12 | 7.8 |
+| Regenerated every replan | 0/25 | 15 | 9.0 |
+
+5 episodes (layouts 0–4). step20000 without RTC is the 25-episode run's episodes 0–4:
+
+| Setting | Scores ep 0–4 | Mean | `robot.place(` calls | Right-gripper flips between calls |
+|---|---|---|---|---|
+| step10000 | 0, 0, 0, 0, 0 | 0.000 | 30/170 | 34% |
+| step20000 | 0.15, 0.15, 0, 0.15, 0 | 0.090 | 17/170 | 82% (ep 0 only) |
+| step20000 + RTC | 0.15, 0.15, 0.15, 0.15, 0 | 0.120 | 15/170 | 41% |
+
+- RTC applied on 165/170 calls (all but the first of each episode). It reduces the gripper loop but does not remove it; nothing reaches a second stack
+- Score 0.15 = one bowl stacked on another and both grippers > 80% open; 1.0 = all three stacked (`task/RoboDojo/tasks/stack_bowls.py::get_score`)
+
+### Where things are
+- Runs under `RoboDojo/eval_result/RoboDojo/stack_bowls/AgenticWAM/arx_x5/`: `…step20000…/step20000-2026-11-05_00-22-06` (25 ep, regenerated), `…/step20000-ep0-2026-11-05_19-18-00` (ep 0, real time, state log), `…step10000…/step10000-rt-2026-11-05_19-35-05` (5 ep), `…step20000…/step20000-rtc-2026-11-05_19-55-07` (5 ep, RTC). Earlier `arx_x5` contents: `RoboDojo/eval_result_backup/stack_bowls_AgenticWAM_arx_x5_20261105_002206/`
+- Open loop on training episode 0 (`runs/openloop_robodojo_stack_bowls_train/step20000/`): right 3.0 mm / 0.61°, left 2.8 mm / 0.46°; the generated program follows the training subtask order
+- Comparison page: https://claude.ai/artifact/Pqz8XjrmtGkSVhtVb5kBGm; self-contained copy `runs/stack_bowls_eval_replay/stack_bowls_eval_replay.html` (videos embedded, 12.5 MB)
+
+**Run (d3)**
+```bash
+cd ~/agentic-wam/RoboDojo/XPolicyLab/policy/AgenticWAM
+G=GPU-c5a0726a-572f-0170-4b94-1a62b2376c64      # nvidia-smi 6; the sim takes CUDA index 5
+EVAL_NUM=5 AGENTICWAM_RTC=1 OMNI_KIT_ACCEPT_EULA=YES ROBODOJO_RUN_ID=step20000-rtc-$(date +%F_%H-%M-%S) \
+  AGENTICWAM_CODE_LOG=$PWD/code.jsonl AGENTICWAM_STATE_LOG=$PWD/state.jsonl \
+  bash eval.sh RoboDojo stack_bowls step20000 arx_x5 joint 0 $G 5 ~/venvs/agenticwam-data RoboDojo > eval.log 2>&1
+```
+- `ROBODOJO_RUN_ID` resumes a run from its `_resume_<run_id>.json`; a new id starts fresh
+
+### Not done
+- Fixes the diagnosis points to: an IK seed or joint-space prior that keeps the elbow branch of the training data, and a policy that conditions on history (past proprio or frames, or training the code memory). Both untested
+- step20000 without RTC has real-time video only for episode 0

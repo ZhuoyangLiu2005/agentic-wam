@@ -15,10 +15,11 @@ after each one, and stops for confirmation before anything that costs money (VLM
 | [pretrain-annotation](skills/pretrain-annotation/SKILL.md) | per-frame code labels for the `yam` / `ego` pretraining sources with the VLM labeling engine, the flat cache, its checks | `docs/PRETRAINING.md` §2, `docs/CODE_ANNOTATION.md` §4 |
 | [posttrain-annotation](skills/posttrain-annotation/SKILL.md) | per-frame code labels for a YAM or Tianji + Sharpa SFT dataset: the VLM pipeline or a task program, the flat cache, alignment checks | `docs/CODE_ANNOTATION.md` |
 | [downstream-training](skills/downstream-training/SKILL.md) | real-robot post-training and RoboTwin training: dry-run gate, smoke, launch, monitoring, resume, then serving / benchmark | `docs/REALWORLD.md` §3, `docs/ROBOTWIN.md` §4 |
+| [robodojo-pipeline](skills/robodojo-pipeline/SKILL.md) | any RoboDojo sim task (dual ARX X5): training view → VLM code labels → label / FK-IK / image-pipeline checks → post-training → open-loop replay → Isaac Sim eval with code-overlay videos and state comparison | `CHOICES.md` (RoboDojo sections) |
 
 A real-robot task goes `agenticwam-setup` → (dataset in the SFT format, `docs/DATA.md`) → `posttrain-annotation` →
 `downstream-training`; a RoboTwin task goes `agenticwam-setup` → `robotwin-collect` → `robotwin-dataprep` →
-`downstream-training`.
+`downstream-training`; a RoboDojo sim task goes `agenticwam-setup` → `robodojo-pipeline`.
 
 ## RoboTwin program authoring (`codegen/sim`)
 
@@ -48,6 +49,7 @@ Layer 1 (the LLM baseline that the fix loop diagnoses) has no runbook of its own
     pretrain-annotation/             SKILL.md
     posttrain-annotation/            SKILL.md
     downstream-training/             SKILL.md
+    robodojo-pipeline/               SKILL.md, scripts/ (check, replay and overlay tools)
     robotwin-program-authoring/      SKILL.md, program-contract.md, grasp/localize/transport/manipulation.md
     robotwin-fix-loop/               SKILL.md, INSTRUCTIONS.md, main-agent-prompt.md, subagent-prompt.md
     robotwin-evosearch/              ... + clean-task-slate.md

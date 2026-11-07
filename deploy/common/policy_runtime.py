@@ -67,6 +67,11 @@ def _sharpa_image_preproc(images: Dict[str, np.ndarray]) -> Dict[str, np.ndarray
     return out
 
 
+
+def _code_pin_on() -> bool:
+    """AGENTICWAM_CODE_PIN: unset, "", "0", "false", "no", "off" mean regenerate the program every replan."""
+    return os.environ.get("AGENTICWAM_CODE_PIN", "").strip().lower() not in ("", "0", "false", "no", "off")
+
 class PolicyRuntime:
     """Owns the model. Thread-safe: one GPU, so inference is serialized under a lock."""
 
@@ -248,10 +253,10 @@ class PolicyRuntime:
         weights and stage them on the model for the fast-joint denoise loop
         (inference-only RTC: hard-freeze the delay prefix, soft-mask the rest).
         Returns True if staged. No-ops unless unified_eef + AGENTICWAM_FAST_JOINT + embodiment
-        "yam" -- the joints_to_delta64 math below is YAM-kinematics-specific; Sharpa has no RTC
-        support yet."""
+        "yam" or "x5" -- both bridges (yam_eef64 / x5_eef64) provide joints_to_delta64 for 14-D
+        joints; Sharpa has no RTC support yet."""
         import torch
-        if (not (self.unified_eef and self.fast_joint and self.embodiment == "yam")
+        if (not (self.unified_eef and self.fast_joint and self.embodiment in ("yam", "x5"))
                 or os.environ.get("AGENTICWAM_RTC") == "0"):
             return False
         cj = np.asarray(committed, dtype=np.float64)
@@ -306,7 +311,7 @@ class PolicyRuntime:
                     rtc_on = self._rtc_stage(state, committed, freeze)
                 except Exception as exc:  # noqa: BLE001 -- RTC is an assist, never a blocker
                     logger.warning("RTC staging failed (%s); running unguided", exc)
-            if os.environ.get("AGENTICWAM_CODE_PIN") and self.fast_joint:
+            if _code_pin_on() and self.fast_joint:
                 self.policy.model._pinned_code_ids = self._episode_code_ids
             t0 = time.perf_counter()
             try:
@@ -319,7 +324,7 @@ class PolicyRuntime:
                 self.policy.model._rtc_weights = None
             if rtc_on:
                 self.n_rtc_guided += 1
-            if (os.environ.get("AGENTICWAM_CODE_PIN") and self.fast_joint
+            if (_code_pin_on() and self.fast_joint
                     and self._episode_code_ids is None):
                 canvas = getattr(self.policy.model, "_last_code_canvas", None)
                 if canvas is not None:
@@ -383,7 +388,7 @@ class PolicyRuntime:
                 "torch_compile": self.compile_mode or "off",
                 "fast_joint": self.fast_joint,
                 "n_rtc_guided": self.n_rtc_guided,
-                "code_pin": bool(os.environ.get("AGENTICWAM_CODE_PIN")),
+                "code_pin": bool(_code_pin_on()),
                 "code_pinned_now": self._episode_code_ids is not None,
                 "action_horizon": self.action_horizon, "replan_steps": self.replan_steps,
                 "num_inference_steps": self.num_inference_steps, "n_cameras": self.n_cameras,
